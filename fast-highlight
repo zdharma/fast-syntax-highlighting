@@ -40,7 +40,7 @@ typeset -gA FAST_HIGHLIGHT_STYLES
 : ${FAST_HIGHLIGHT_STYLES[command]:=fg=green,bold}
 : ${FAST_HIGHLIGHT_STYLES[precommand]:=fg=green}
 : ${FAST_HIGHLIGHT_STYLES[commandseparator]:=none}
-: ${FAST_HIGHLIGHT_STYLES[hashed-command]:=fg=green}
+: ${FAST_HIGHLIGHT_STYLES[hashed-command]:=fg=green,bold}
 : ${FAST_HIGHLIGHT_STYLES[path]:=fg=magenta}
 : ${FAST_HIGHLIGHT_STYLES[path_pathseparator]:=}
 : ${FAST_HIGHLIGHT_STYLES[globbing]:=fg=blue,bold}
