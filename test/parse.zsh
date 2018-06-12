@@ -32,7 +32,7 @@ else
 fi
 
 zmodload zsh/zprof
-autoload is-at-least chroma/-git.ch
+autoload -- is-at-least chroma/-git.ch chroma/-spell.ch -fast-match-trajectories -fast-run-git-command
 
 setopt interactive_comments
 

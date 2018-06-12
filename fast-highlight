@@ -495,12 +495,15 @@ FAST_ZPATH_HOOKS=(
      (( this_word & 8192 )) && ${FAST_HIGHLIGHT[chroma-$active_command]} 0 "$__arg" "$_start_pos" "$_end_pos" && __pos=0
    }
 
+   () {
    # ZPath run
+   #if [[ "$__arg_type" -ne 3 && -n "${(M)BUFFER%%${__arg}[[:blank:]]#}" ]]; then
    if [[ "${${BUFFER%%[[:blank:]]##}[-$__asize,-1]}" = "$__arg" && "$__arg_type" -ne 3 ]]; then
       -fast-match-trajectories "$active_command"
       FAST_EVENTS=()
       for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
    fi
+   }
 
    (( __pos == 0 )) && continue
 
