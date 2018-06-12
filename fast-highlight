@@ -173,6 +173,16 @@ typeset -gA FAST_ASSIGNS_SEEN
 # for other scripts to process
 typeset -ga ZLAST_COMMANDS
 
+# Events, states
+typeset -ga FAST_EVENTS
+
+# ZPath hooks
+typeset -gA FAST_ZPATH_HOOKS
+FAST_ZPATH_HOOKS=(
+  # Git with optional version string
+  "git(-*)#" $'1. START\0SUB-commit\0OPTARG:-m|OPTARG:--message\0ARG:(*)\0OFFSET:([0-9]##)\0POS:([0-9]##);([0-9]##) \1 RUN:chroma/-spell.ch 2 ${__capture[1]} $(( __capture[3]+__capture[2] )) ${__capture[4]} 0:0:1:1:commit:1:-m:'
+)
+
 # Get the type of a command.
 #
 # Uses the zsh/parameter module if available to avoid forks, and a
@@ -258,6 +268,7 @@ typeset -ga ZLAST_COMMANDS
   emulate -L zsh
   setopt extendedglob bareglobqual nonomatch noksharrays
 
+  FAST_EVENTS=()
   [[ $CONTEXT == "select" ]] && return 0
 
   (( FAST_HIGHLIGHT[path_dirs_was_set] )) && setopt PATH_DIRS
@@ -271,8 +282,8 @@ typeset -ga ZLAST_COMMANDS
   # __arg_type can be 0, 1, 2 or 3, i.e. precommand, control flow, command separator
   # __idx and _end_idx are used in sub-functions
   # for this_word and next_word look below at commented integers and at state machine description
-  integer __arg_type=0 MBEGIN MEND in_redirection __len=${#__buf} already_added offset __idx _end_idx this_word=1 next_word=0 insane_alias __pos  __asize
-  local -a match mbegin mend __inputs __list
+  integer __arg_type=0 MBEGIN MEND in_redirection __len=${#__buf} already_added offset __idx _end_idx this_word=1 next_word=0 insane_alias __pos __asize
+  local -a match mbegin mend __inputs __list __capture __reply
 
   # This comment explains the numbers:
   # BIT_for - word after reserved-word-recognized `for'
@@ -383,7 +394,6 @@ typeset -ga ZLAST_COMMANDS
         in_redirection=0
         proc_buf="${proc_buf[offset + __asize + 1,__len]}"
         _start_pos=$_end_pos
-        continue
       else
         # One more short path – for ';' command separator
         (( this_word & BIT_case_item )) || { (( in_array_assignment )) && (( this_word = 2 | (this_word & BIT_case_code) )) || { (( this_word = 1 | (this_word & BIT_case_code) )); highlight_glob=1; }; }
@@ -391,10 +401,14 @@ typeset -ga ZLAST_COMMANDS
         [[ "${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}commandseparator]}" != "none" ]] && (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}commandseparator]}")
         proc_buf="${proc_buf[offset + __asize + 1,__len]}"
         _start_pos=$_end_pos
-        continue
       fi
 
-      __arg_type=3
+      # ZPath run
+      -fast-match-trajectories "$active_command"
+      for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
+      FAST_EVENTS=()
+      active_command=""
+      continue
     else
       offset=0
       if [[ "$proc_buf" = (#b)(#s)(([[:space:]]|\\[[:space:]])##)* ]]; then
@@ -470,15 +484,25 @@ typeset -ga ZLAST_COMMANDS
       fi
    fi
 
+   # Chroma run
+   __pos=1
    (( this_word & 1 )) && {
      active_command="$__arg"
      [[ -n ${FAST_HIGHLIGHT[chroma-$active_command]} ]] && {
-       (( next_word = next_word | 8192 ))  # lasting state
-       ${FAST_HIGHLIGHT[chroma-$active_command]} 1 "$__arg" "$_start_pos" "$_end_pos" && continue
+       ${FAST_HIGHLIGHT[chroma-$active_command]} 1 "$__arg" "$_start_pos" "$_end_pos" && __pos=0
      } || (( 1 ))
    } || {
-     (( this_word & 8192 )) && ${FAST_HIGHLIGHT[chroma-$active_command]} 0 "$__arg" "$_start_pos" "$_end_pos" && continue
+     (( this_word & 8192 )) && ${FAST_HIGHLIGHT[chroma-$active_command]} 0 "$__arg" "$_start_pos" "$_end_pos" && __pos=0
    }
+
+   # ZPath run
+   if [[ "${${BUFFER%%[[:blank:]]##}[-$__asize,-1]}" = "$__arg" && "$__arg_type" -ne 3 ]]; then
+      -fast-match-trajectories "$active_command"
+      FAST_EVENTS=()
+      for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
+   fi
+
+   (( __pos == 0 )) && continue
 
    expanded_path=""
 
@@ -813,7 +837,8 @@ typeset -ga ZLAST_COMMANDS
                    __style=${FAST_THEME_NAME}redirection
                  else
                    if [[ -z "${FAST_HIGHLIGHT[no_check_paths]}" ]]; then
-                     if [[ -z "${FAST_HIGHLIGHT[cache-path-${__arg}-${_start_pos}]}" || $(( EPOCHSECONDS - FAST_HIGHLIGHT[cache-path-${__arg}-${_start_pos}-born-at] )) -gt 8 ]]; then
+                     if [[ -z "${FAST_HIGHLIGHT[cache-path-${__arg}-${_start_pos}]}" || \
+                       $(( EPOCHSECONDS - FAST_HIGHLIGHT[cache-path-${__arg}-${_start_pos}-born-at] )) -gt 8 ]]; then
                        exec {PCFD}< <(-fast-highlight-check-path)
                        FAST_HIGHLIGHT[path-queue]+=";$_start_pos $_end_pos;"
                        zle -F -w "$PCFD" fast-highlight-check-path-handler
@@ -872,6 +897,12 @@ typeset -ga ZLAST_COMMANDS
       else
         (( next_word = 1 | (next_word & BIT_case_code) ))
         highlight_glob=1
+
+        # ZPath run
+        -fast-match-trajectories "$active_command"
+        for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
+        FAST_EVENTS=()
+        active_command=""
       fi
     elif (( (__arg_type & 3) * (this_word & 1) )); then # (( __arg_type == 1 || __arg_type == 2 )) && (( this_word & 1 ))
         (( next_word = 1 | (next_word & (64 | BIT_case_code)) ))
