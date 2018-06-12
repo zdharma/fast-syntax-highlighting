@@ -497,8 +497,9 @@ FAST_ZPATH_HOOKS=(
 
    () {
    # ZPath run
+   if [[ "$__arg_type" -ne 3 && "$BUFFER" = *${__arg}[[:blank:]]# ]]; then
    #if [[ "$__arg_type" -ne 3 && -n "${(M)BUFFER%%${__arg}[[:blank:]]#}" ]]; then
-   if [[ "${${BUFFER%%[[:blank:]]##}[-$__asize,-1]}" = "$__arg" && "$__arg_type" -ne 3 ]]; then
+   #if [[ "${${BUFFER%%[[:blank:]]##}[-$__asize,-1]}" = "$__arg" && "$__arg_type" -ne 3 ]]; then
       -fast-match-trajectories "$active_command"
       FAST_EVENTS=()
       for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
