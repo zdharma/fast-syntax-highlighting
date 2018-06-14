@@ -71,6 +71,7 @@ for (( ii = 1; ii <= size; ++ ii )); do
         }
     fi
 done'
+        (( ${+ZSH_EXECUTION_STRING} == 0 )) && { print -zr "$in"; return 0; }
         input+=( "$in" )
         input+=( "$in" )
     elif [[ "$1" = "-git" ]]; then
@@ -87,6 +88,8 @@ git tag -a 'v1.18' -m 'Here-string is highlighted, descriptor-variables passed t
 git tag -l -n9
 git checkout cb66b11
 "
+        (( ${+ZSH_EXECUTION_STRING} == 0 )) && { print -zr "$in"; return 0; }
+
         input+=( "$in" )
         input+=( "$in" )
     elif [[ "$1" = "-hue" ]]; then
@@ -127,7 +130,7 @@ git checkout cb66b11
     done
 
     print "Running time: $SECONDS"
-    zprof | head
+    zprof | head -n 14
 # File input?
 elif [[ -r "$1" ]]; then
     # Load from given file
