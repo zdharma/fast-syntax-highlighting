@@ -28,6 +28,9 @@
 # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -------------------------------------------------------------------------------------------------
 
+# `if`, `case` routing (mapping: condition -> function)
+source "$FAST_BASE_DIR"/routing.conf
+
 typeset -gA __fast_highlight_main__command_type_cache FAST_BLIST_PATTERNS
 
 # Define default styles. You can set this after loading the plugin in
@@ -135,6 +138,11 @@ __FAST_HIGHLIGHT_TOKEN_TYPES=(
   readonly 4
 )
 
+fpath+=( $FAST_BASE_DIR/shade )
+autoload reserved.zsh
+autoload builtin.zsh
+autoload alias.zsh
+autoload none.zsh
 # A hash instead of multiple globals
 typeset -gA FAST_HIGHLIGHT
 
@@ -495,7 +503,6 @@ FAST_ZPATH_HOOKS=(
      (( this_word & 8192 )) && ${FAST_HIGHLIGHT[chroma-$active_command]} 0 "$__arg" "$_start_pos" "$_end_pos" && __pos=0
    }
 
-   () {
    # ZPath run
    if [[ "$__arg_type" -ne 3 && "$BUFFER" = *${__arg}[[:blank:]]# ]]; then
    #if [[ "$__arg_type" -ne 3 && -n "${(M)BUFFER%%${__arg}[[:blank:]]#}" ]]; then
@@ -504,7 +511,6 @@ FAST_ZPATH_HOOKS=(
       FAST_EVENTS=()
       for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
    fi
-   }
 
    (( __pos == 0 )) && continue
 
@@ -544,130 +550,19 @@ FAST_ZPATH_HOOKS=(
        fi
 
       case $REPLY in
-        reserved)       # reserved word
-                        [[ "$__arg" = "[[" ]] && __style=${FAST_THEME_NAME}builtin || __style=${FAST_THEME_NAME}reserved-word
-                        if [[ $__arg == $'\x7b' ]]; then # {
-                          braces_stack='Y'"$braces_stack"
-                        elif [[ $__arg == $'\x7d' && $braces_stack[1] == "Y" ]]; then # }
-                          # We're at command word, so no need to check right_brace_is_recognised_everywhere
-                          braces_stack[1]=""
-                          __style=${FAST_THEME_NAME}reserved-word
-                          (( next_word = next_word | 16 ))
-                        elif [[ $__arg == "[[" ]]; then
-                          braces_stack='A'"$braces_stack"
-                        elif [[ $__arg == "for" ]]; then
-                          (( next_word = next_word | 32 )) # BIT_for
-                        elif [[ $__arg == "case" ]]; then
-                          (( next_word = BIT_case_preamble ))
-                        fi
+        reserved)       reserved.zsh
                         ;;
         'suffix alias') __style=${FAST_THEME_NAME}suffix-alias;;
-        alias)
-                          insane_alias=0
-                          case $__arg in
-                            # Issue #263: aliases with '=' on their LHS.
-                            #
-                            # There are three cases:
-                            #
-                            # - Unsupported, breaks 'alias -L' output, but invokable:
-                            ('='*) :;;
-                            # - Unsupported, not invokable:
-                            (*'='*) insane_alias=1;;
-                            # - The common case:
-                            (*) :;;
-                          esac
-                          if (( insane_alias )); then
-                            __style=${FAST_THEME_NAME}unknown-token
-                          else
-                            __style=${FAST_THEME_NAME}alias
-                            zmodload -e zsh/parameter && alias_target=${aliases[$__arg]} || alias_target="${"$(alias -- $__arg)"#*=}"
-                            [[ ${__FAST_HIGHLIGHT_TOKEN_TYPES[$alias_target]} = "1" && "$__arg_type" != "1" ]] && __FAST_HIGHLIGHT_TOKEN_TYPES[$__arg]="1"
-                          fi
+        alias)          alias.zsh
                         ;;
-        builtin)        __style=${FAST_THEME_NAME}builtin
-                        # T - typeset, etc. mode
-                        [[ "$__arg" = (typeset|declare|local|float|integer|export|readonly) ]] && braces_stack='T'"$braces_stack"
-                        [[ "$__arg" = eval ]] && (( next_word = next_word | 256 ))
+        builtin)        builtin.zsh
                         ;;
         function)       __style=${FAST_THEME_NAME}function;;
         command)        __style=${FAST_THEME_NAME}command;;
         hashed)         __style=${FAST_THEME_NAME}hashed-command;;
         dirpath)        __style=${FAST_THEME_NAME}path;;
         none)           # Assign?
-                        if [[ $__arg == [a-zA-Z_][a-zA-Z0-9_]#(|\[[^\]]#\])(|[^\]]#\])(|[+])=* || $__arg == [0-9]##(|[+])=* || "${braces_stack[1]}" = 'T' ]]; then
-                          __style=${FAST_THEME_NAME}assign
-                          [[ "$__arg" = *[=]* ]] && FAST_ASSIGNS_SEEN[${__arg%%=*}]=1
-
-                          # Handle array assignment
-                          integer itmp=${__arg[(i)=\(]}-1+1 iitmp=${__arg[(i)\)]}-1
-                          (( itmp <= __asize - 1 )) && {
-                              (( __start=_start_pos-${#PREBUFFER}+itmp, __end=__start+1, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}assign-array-bracket]}")
-                              (( iitmp <= __asize - 1 )) && (( __start=_start_pos-${#PREBUFFER}+iitmp, __end=__start+1, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}assign-array-bracket]}") || in_array_assignment=1
-                          } || { [[ "${braces_stack[1]}" != 'T' ]] && (( next_word = (next_word | 1) & ~2 )); }
-
-                          # Handle no-string highlight, string "/' highlight, math mode highlight
-                          local ctmp="\"" dtmp="'"
-                          itmp=${__arg[(i)$ctmp]}-1 iitmp=${__arg[(i)$dtmp]}-1
-                          integer jtmp=${__arg[(b:itmp+2:i)$ctmp]} jjtmp=${__arg[(b:iitmp+2:i)$dtmp]}
-                          (( itmp < iitmp && itmp <= __asize - 1 )) && (( jtmp > __asize && (jtmp = __asize), 1 > 0 )) && \
-                              (( __start=_start_pos-${#PREBUFFER}+itmp, __end=_start_pos-${#PREBUFFER}+jtmp, __start >= 0 )) && \
-                                  reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}double-quoted-argument]}") && \
-                                      { itmp="${__arg[(i)=]}"; __arg="${__arg[itmp,__asize]}"; (( _start_pos += itmp - 1 ));
-                                        -fast-highlight-string; (( _start_pos = _start_pos - itmp + 1, 1 > 0 )); } || \
-                          {
-                              (( iitmp <= __asize - 1 )) && (( jjtmp > __asize && (jjtmp = __asize), 1 > 0 )) && \
-                                  (( __start=_start_pos-${#PREBUFFER}+iitmp, __end=_start_pos-${#PREBUFFER}+jjtmp, __start >= 0 )) && \
-                                      reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}single-quoted-argument]}")
-                          } || \
-                            {
-                                itmp="${__arg[(i)=]}"; __arg="${__arg[itmp,__asize]}"; (( _start_pos += itmp - 1 ));
-                                [[ "${__arg[2,4]}" = '$((' ]] && { -fast-highlight-math-string;
-                                   (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$(( __start + 2 )) $(( __start + 4 )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
-                                   (( jtmp = ${__arg[(I)\)\)]}-1, jtmp > 0 )) && (( __start=_start_pos-${#PREBUFFER}+jtmp, __end=__start+2, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
-                                } || -fast-highlight-string;
-                                (( _start_pos = _start_pos - itmp + 1, 1 > 0 ))
-                            }
-                        elif [[ $__arg[1] = $histchars[1] && -n "${__arg[2]}" ]]; then
-                          __style=${FAST_THEME_NAME}history-expansion
-                        elif [[ $__arg[1] == $histchars[2] ]]; then
-                          __style=${FAST_THEME_NAME}history-expansion
-                        elif (( __arg_type == 3 )); then
-                          # This highlights empty commands (semicolon follows nothing) as an error.
-                          # Zsh accepts them, though.
-                          (( this_word & 2 )) && __style=${FAST_THEME_NAME}commandseparator
-                        elif [[ $__arg[1,2] == '((' ]]; then
-                          # Arithmetic evaluation.
-                          #
-                          # Note: prior to zsh-5.1.1-52-g4bed2cf (workers/36669), the ${(z)...}
-                          # splitter would only output the '((' token if the matching '))' had
-                          # been typed.  Therefore, under those versions of zsh, BUFFER="(( 42"
-                          # would be highlighted as an error until the matching "))" are typed.
-                          #
-                          # We highlight just the opening parentheses, as a reserved word; this
-                          # is how [[ ... ]] is highlighted, too.
-
-                          # ADD
-                          (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $(( __start + 2 )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
-                          already_added=1
-                          -fast-highlight-math-string
-                          # ADD
-                          [[ $__arg[-2,-1] == '))' ]] && (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$(( __end - 2 )) $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
-                        elif [[ $__arg == '()' ]]; then
-                          # anonymous function
-                          __style=${FAST_THEME_NAME}reserved-word
-                        elif [[ $__arg == $'\x28' ]]; then
-                          # subshell (
-                          __style=${FAST_THEME_NAME}reserved-word
-                          braces_stack='R'"$braces_stack"
-                        elif [[ $__arg == $'\x29' ]]; then
-                          # )
-                          [[ $braces_stack[1] == "R" ]] && { braces_stack[1]=""; __style=${FAST_THEME_NAME}reserved-word; }
-                        elif (( this_word & 14 )); then
-                          __style=${FAST_THEME_NAME}default
-                        elif [[ "$__arg" = ';;' ]] && (( this_word & BIT_case_code )); then
-                          (( next_word = (next_word | BIT_case_item) & ~(BIT_case_code+3) ))
-                          __style=${FAST_THEME_NAME}default
-                        fi
+                        -fast-hue-none-call
                         ;;
         *)
                         # ADD

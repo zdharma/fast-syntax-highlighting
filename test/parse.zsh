@@ -15,17 +15,21 @@
 ZERO="${(%):-%N}"
 
 if [[ -e "${ZERO}/../fast-highlight" ]]; then
-    source "${ZERO}/../fast-highlight"
     fpath+=( "${ZERO}/.." "${ZERO}/../shade" )
+    FAST_BASE_DIR="${ZERO}/.."
+    source "${ZERO}/../fast-highlight"
 elif [[ -e "../fast-highlight" ]]; then
-    source "../fast-highlight"
     fpath+=( "$PWD/.." "${PWD}/../shade" )
+    FAST_BASE_DIR=".."
+    source "../fast-highlight"
 elif [[ -e "${ZERO}/fast-highlight" ]]; then
-    source "${ZERO}/fast-highlight"
     fpath+=( "${ZERO}" "${ZERO}/shade" )
+    FAST_BASE_DIR="$ZERO"
+    source "${ZERO}/fast-highlight"
 elif [[ -e "./fast-highlight" ]]; then
-    source "./fast-highlight"
     fpath+=( "$PWD" "$PWD/shade" )
+    FAST_BASE_DIR="$PWD"
+    source "./fast-highlight"
 else
     print -u2 "Could not find fast-highlight, aborting"
     (( ${+ZSH_EXECUTION_STRING} )) && exit 1 || return 1

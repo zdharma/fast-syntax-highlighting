@@ -1,0 +1,2 @@
+                          # )
+                          [[ $braces_stack[1] == "R" ]] && { braces_stack[1]=""; __style=${FAST_THEME_NAME}reserved-word; }

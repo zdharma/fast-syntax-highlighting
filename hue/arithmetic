@@ -1,0 +1,15 @@
+# Arithmetic evaluation.
+#
+# Note: prior to zsh-5.1.1-52-g4bed2cf (workers/36669), the ${(z)...}
+# splitter would only output the '((' token if the matching '))' had
+# been typed.  Therefore, under those versions of zsh, BUFFER="(( 42"
+# would be highlighted as an error until the matching "))" are typed.
+
+# ADD
+(( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $(( __start + 2 )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
+already_added=1
+-fast-highlight-math-string
+# ADD
+[[ $__arg[-2,-1] == '))' ]] && (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$(( __end - 2 )) $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
+
+# vim:ft=zsh:et:sw=4

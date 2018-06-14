@@ -1,0 +1,4 @@
+(( next_word = (next_word | BIT_case_item) & ~(BIT_case_code+3) ))
+__style=${FAST_THEME_NAME}default
+
+# vim:ft=zsh:et:sw=4

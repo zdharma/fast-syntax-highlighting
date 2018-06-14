@@ -1,0 +1,34 @@
+__style=${FAST_THEME_NAME}assign
+[[ "$__arg" = *[=]* ]] && FAST_ASSIGNS_SEEN[${__arg%%=*}]=1
+
+# Handle array assignment
+integer itmp=${__arg[(i)=\(]}-1+1 iitmp=${__arg[(i)\)]}-1
+(( itmp <= __asize - 1 )) && {
+    (( __start=_start_pos-${#PREBUFFER}+itmp, __end=__start+1, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}assign-array-bracket]}")
+    (( iitmp <= __asize - 1 )) && (( __start=_start_pos-${#PREBUFFER}+iitmp, __end=__start+1, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}assign-array-bracket]}") || in_array_assignment=1
+} || { [[ "${braces_stack[1]}" != 'T' ]] && (( next_word = (next_word | 1) & ~2 )); }
+
+# Handle no-string highlight, string "/' highlight, math mode highlight
+local ctmp="\"" dtmp="'"
+itmp=${__arg[(i)$ctmp]}-1 iitmp=${__arg[(i)$dtmp]}-1
+integer jtmp=${__arg[(b:itmp+2:i)$ctmp]} jjtmp=${__arg[(b:iitmp+2:i)$dtmp]}
+(( itmp < iitmp && itmp <= __asize - 1 )) && (( jtmp > __asize && (jtmp = __asize), 1 > 0 )) && \
+    (( __start=_start_pos-${#PREBUFFER}+itmp, __end=_start_pos-${#PREBUFFER}+jtmp, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}double-quoted-argument]}") && \
+            { itmp="${__arg[(i)=]}"; __arg="${__arg[itmp,__asize]}"; (( _start_pos += itmp - 1 ));
+              -fast-highlight-string; (( _start_pos = _start_pos - itmp + 1, 1 > 0 )); } || \
+{
+    (( iitmp <= __asize - 1 )) && (( jjtmp > __asize && (jjtmp = __asize), 1 > 0 )) && \
+        (( __start=_start_pos-${#PREBUFFER}+iitmp, __end=_start_pos-${#PREBUFFER}+jjtmp, __start >= 0 )) && \
+            reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}single-quoted-argument]}")
+} || \
+    {
+        itmp="${__arg[(i)=]}"; __arg="${__arg[itmp,__asize]}"; (( _start_pos += itmp - 1 ));
+        [[ "${__arg[2,4]}" = '$((' ]] && { -fast-highlight-math-string;
+            (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$(( __start + 2 )) $(( __start + 4 )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
+            (( jtmp = ${__arg[(I)\)\)]}-1, jtmp > 0 )) && (( __start=_start_pos-${#PREBUFFER}+jtmp, __end=__start+2, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
+        } || -fast-highlight-string
+        (( _start_pos = _start_pos - itmp + 1, 1 > 0 ))
+    }
+
+# vim:ft=zsh:et:sw=4
