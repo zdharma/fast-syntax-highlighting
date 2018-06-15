@@ -10,25 +10,29 @@
 # option in $1), no region_highlight file then.
 #
 
-[[ -z "$ZSH_VERSION" ]] && exec /usr/bin/env /usr/local/bin/zsh-5.4.2-dev-0 -f -c "source \"$0\" \"$1\" \"$2\" \"$3\""
+[[ -z "$ZSH_VERSION" ]] && exec /usr/bin/env /usr/local/bin/zsh-5.5.1-dev-0 -f -c "source \"$0\" \"$1\" \"$2\" \"$3\""
 
 ZERO="${(%):-%N}"
 
 if [[ -e "${ZERO}/../fast-highlight" ]]; then
+    fpath+=( "${ZERO}/.." "${ZERO}/../shade" )
+    FAST_BASE_DIR="${ZERO}/.."
     source "${ZERO}/../fast-highlight"
-    fpath+=( "${ZERO}/.." )
 elif [[ -e "../fast-highlight" ]]; then
+    fpath+=( "$PWD/.." "${PWD}/../shade" )
+    FAST_BASE_DIR=".."
     source "../fast-highlight"
-    fpath+=( "$PWD/.." )
 elif [[ -e "${ZERO}/fast-highlight" ]]; then
+    fpath+=( "${ZERO}" "${ZERO}/shade" )
+    FAST_BASE_DIR="$ZERO"
     source "${ZERO}/fast-highlight"
-    fpath+=( "${ZERO}" )
 elif [[ -e "./fast-highlight" ]]; then
+    fpath+=( "$PWD" "$PWD/shade" )
+    FAST_BASE_DIR="$PWD"
     source "./fast-highlight"
-    fpath+=( "./" )
 else
     print -u2 "Could not find fast-highlight, aborting"
-    exit 1
+    (( ${+ZSH_EXECUTION_STRING} )) && exit 1 || return 1
 fi
 
 zmodload zsh/zprof
@@ -37,7 +41,7 @@ autoload -- is-at-least chroma/-git.ch chroma/-spell.ch -fast-match-trajectories
 setopt interactive_comments
 
 # Own input?
-if [[ "$1" = "-o" || "$1" = "-oo" || "$1" = "-ooo" || "$1" = "-git" ]]; then
+if [[ "$1" = "-o" || "$1" = "-oo" || "$1" = "-ooo" || "$1" = "-git" || "$1" = "-hue" ]]; then
     typeset -a input
     if [[ "$1" = "-o" ]]; then
         input+=( "./parse.zsh ../fast-highlight parse2.out" )
@@ -71,6 +75,7 @@ for (( ii = 1; ii <= size; ++ ii )); do
         }
     fi
 done'
+        (( ${+ZSH_EXECUTION_STRING} == 0 )) && { print -zr "$in"; return 0; }
         input+=( "$in" )
         input+=( "$in" )
     elif [[ "$1" = "-git" ]]; then
@@ -87,13 +92,29 @@ git tag -a 'v1.18' -m 'Here-string is highlighted, descriptor-variables passed t
 git tag -l -n9
 git checkout cb66b11
 "
+        (( ${+ZSH_EXECUTION_STRING} == 0 )) && { print -zr "$in"; return 0; }
+
         input+=( "$in" )
         input+=( "$in" )
+    elif [[ "$1" = "-hue" ]]; then
+        local in="var=\$other; local var=\$other
+        () { eval \"\$var\"; }
+        case \$other in
+            \$var)
+                ( echo OK; )
+                ;;
+        esac
+        sudo -i -s ls -1 /var/log
+        () { ( eval \"command ls -1\" ); } argument"
+
+        (( ${+ZSH_EXECUTION_STRING} == 0 )) && { print -zr "$in"; return 0; }
+
+        input+=( "$in" "$in" )
     fi
 
     typeset -a long_input
-    integer i
-    for (( i=1; i<= 50; i ++ )); do
+    integer ii
+    for (( ii=1; ii<= 50; ii ++ )); do
         long_input+=( "${input[@]}" )
     done
 
@@ -113,7 +134,7 @@ git checkout cb66b11
     done
 
     print "Running time: $SECONDS"
-    zprof | head
+    zprof | head -n 14
 # File input?
 elif [[ -r "$1" ]]; then
     # Load from given file
@@ -143,13 +164,13 @@ elif [[ -r "$1" ]]; then
 else
     if [[ -z "$1" ]]; then
         print -u2 "Usage: ./parse.zsh {to-parse file} [region_highlight output file]"
-        exit 2
+        (( ${+ZSH_EXECUTION_STRING} )) && exit 2 || return 2
     else
         print -u2 "Unreadable to-parse file \`$1', aborting"
-        exit 3
+        (( ${+ZSH_EXECUTION_STRING} )) && exit 3 || return 3
     fi
 fi
 
-exit 0
+(( ${+ZSH_EXECUTION_STRING} )) && exit 0 || return 0
 
 # vim:ft=zsh
