@@ -290,4 +290,6 @@ zstyle -s :plugin:fast-syntax-highlighting theme __fsyh_theme
 
 unset __fsyh_theme
 
+source "${ZERO:h}/routing.conf"
+
 -fast-highlight-fill-option-variables

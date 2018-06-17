@@ -549,27 +549,13 @@ FAST_ZPATH_HOOKS=(
          -fast-highlight-main-type $expanded_path
        fi
 
-      case $REPLY in
-        reserved)       reserved.zsh
-                        ;;
-        'suffix alias') __style=${FAST_THEME_NAME}suffix-alias;;
-        alias)          alias.zsh
-                        ;;
-        builtin)        builtin.zsh
-                        ;;
-        function)       __style=${FAST_THEME_NAME}function;;
-        command)        __style=${FAST_THEME_NAME}command;;
-        hashed)         __style=${FAST_THEME_NAME}hashed-command;;
-        dirpath)        __style=${FAST_THEME_NAME}path;;
-        none)           # Assign?
-                        -fast-hue-none-call
-                        ;;
-        *)
-                        # ADD
-                        # (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $__end commandtypefromthefuture-$REPLY")
-                        already_added=1
-                        ;;
-      esac
+       #
+       # THE COMPUTATION
+       #
+       # Branch selection based on type stored in $REPLY
+       #
+
+       -fast-hue-type-call
      fi
    # in_redirection || BIT_regular || BIT_sudo_opt || BIT_sudo_arg
    elif (( in_redirection + this_word & 14 ))
