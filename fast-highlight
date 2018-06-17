@@ -555,7 +555,7 @@ FAST_ZPATH_HOOKS=(
        # Branch selection based on type stored in $REPLY
        #
 
-       -fast-hue-type-call
+       -fast-hue-type-choose
      fi
    # in_redirection || BIT_regular || BIT_sudo_opt || BIT_sudo_arg
    elif (( in_redirection + this_word & 14 ))
