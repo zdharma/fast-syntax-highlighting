@@ -1,12 +1,13 @@
-if [[ -z "${FAST_HIGHLIGHT[cache-path-${(q)__arg}-${_start_pos}]}" || \
-    $(( EPOCHSECONDS - FAST_HIGHLIGHT[cache-path-${(q)__arg}-${_start_pos}-born-at] )) -gt 8 ]]
+# The FAST_HIGHLIGHT[cache...] will turn to 0 if the value for the key is empty
+if (( EPOCHSECONDS - FAST_HIGHLIGHT[cache-path-${(q)__arg}-${_start_pos}-born-at] > 8 ))
 then
     exec {PCFD}< <(-fast-highlight-check-path)
     FAST_HIGHLIGHT[path-queue]+=";$_start_pos $_end_pos;"
     zle -F -w "$PCFD" fast-highlight-check-path-handler
     already_added=1
 elif [[ "${FAST_HIGHLIGHT[cache-path-${(q)__arg}-${_start_pos}]}" -eq 1 ]]; then
-    (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}path]}")
+    (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}path]}")
     already_added=1
 else
     __style=${FAST_THEME_NAME}default
