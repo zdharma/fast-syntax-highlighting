@@ -550,12 +550,10 @@ FAST_ZPATH_HOOKS=(
        fi
 
        #
-       # THE COMPUTATION
-       #
-       # Branch selection based on type stored in $REPLY
+       # Branch (jump) selection based on type stored in $REPLY
        #
 
-       -fast-hue-type-choose
+       ${FAST_HIGHLIGHT[tp-$REPLY]}
      fi
    # in_redirection || BIT_regular || BIT_sudo_opt || BIT_sudo_arg
    elif (( in_redirection + this_word & 14 ))
