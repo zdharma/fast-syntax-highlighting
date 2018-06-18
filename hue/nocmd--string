@@ -1,0 +1,23 @@
+# Eval?
+if (( this_word & 256 )); then
+    if [[ -n "${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}secondary]}" ]]; then
+        __idx=1
+        _mybuf="$FAST_THEME_NAME"
+        FAST_THEME_NAME="${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}secondary]}"
+        (( ${+FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}default]} )) || source "$FAST_BASE_DIR/secondary_theme.zsh"
+    else
+        __idx=0
+    fi
+    -fast-highlight-process "$PREBUFFER" "${__arg[2,__asize]%[\'\"]}" "$(( _start_pos + 1 ))"
+    (( __idx )) && FAST_THEME_NAME="$_mybuf"
+    already_added=1
+else
+    if [[ "$__arg" = "'"* ]]; then
+        __style=${FAST_THEME_NAME}single-quoted-argument
+    else
+        (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}double-quoted-argument]}")
+        -fast-highlight-string
+        already_added=1
+    fi
+fi
+# vim:ft=zsh:et:sw=4

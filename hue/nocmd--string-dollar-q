@@ -1,0 +1,6 @@
+(( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && \
+    reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}dollar-quoted-argument]}")
+-fast-highlight-dollar-string
+already_added=1
+
+# vim:ft=zsh:et:sw=4

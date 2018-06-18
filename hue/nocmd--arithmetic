@@ -1,0 +1,12 @@
+-fast-highlight-math-string
+
+# ADD
+(( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && \
+    reply+=("$(( __start + 1 )) $(( __start + 3 )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
+# ADD
+[[ $__arg[-2,-1] == '))' ]] && (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && \
+    reply+=("$(( __end - 2 )) $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}reserved-word]}")
+
+already_added=1
+
+# vim:ft=zsh:et:sw=4

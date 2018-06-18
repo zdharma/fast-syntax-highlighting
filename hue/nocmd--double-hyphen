@@ -1,0 +1,8 @@
+[[ "$__arg" == "--" ]] && { 
+    _was_double_hyphen=1
+    __style=${FAST_THEME_NAME}double-hyphen-option
+} || {
+    (( !_was_double_hyphen )) && __style=${FAST_THEME_NAME}double-hyphen-option || __style=${FAST_THEME_NAME}default
+}
+
+# vim:ft=zsh:et:sw=4

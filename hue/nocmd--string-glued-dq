@@ -1,0 +1,8 @@
+local ctmp="\""
+integer itmp=${__arg[(i)$ctmp]}-1
+integer jtmp=${__arg[(b:itmp+2:i)$ctmp]}
+(( __start=_start_pos-${#PREBUFFER}+itmp, __end=_start_pos-${#PREBUFFER}+jtmp, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}double-quoted-argument]}")
+-fast-highlight-string
+already_added=1
+
+# vim:ft=zsh:et:sw=4

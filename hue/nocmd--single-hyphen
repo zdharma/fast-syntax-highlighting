@@ -1,0 +1,3 @@
+(( !_was_double_hyphen )) && __style=${FAST_THEME_NAME}single-hyphen-option || __style=${FAST_THEME_NAME}default
+
+# vim:ft=zsh:et:sw=4

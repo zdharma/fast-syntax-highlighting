@@ -1,0 +1,9 @@
+# '()' - possibly a function definition
+# || false # TODO: or if the previous word was a command word
+(( FAST_HIGHLIGHT[multi_func_def] )) && (( next_word = next_word | 1 ))
+__style=${FAST_THEME_NAME}reserved-word
+
+# Remove possible annoying unknown-token __style, or misleading function __style
+reply[-1]=()
+
+# vim:ft=zsh:et:sw=4

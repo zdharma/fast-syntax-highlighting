@@ -1,0 +1,3 @@
+(( highlight_glob )) && __style=${FAST_THEME_NAME}globbing || __style=${FAST_THEME_NAME}default
+
+# vim:ft=zsh:et:sw=4

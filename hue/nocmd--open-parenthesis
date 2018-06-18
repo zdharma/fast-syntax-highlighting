@@ -1,0 +1,5 @@
+# '(' inside [[
+__style=${FAST_THEME_NAME}reserved-word
+braces_stack='R'"$braces_stack"
+
+# vim:ft=zsh:et:sw=4

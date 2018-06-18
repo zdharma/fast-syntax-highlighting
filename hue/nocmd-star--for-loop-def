@@ -1,0 +1,38 @@
+# F on braces stack leads here ("F" associates with "for-loop")
+
+-fast-highlight-string
+_mybuf="$__arg"
+__idx=_start_pos
+while [[ "$_mybuf" = (#b)[^a-zA-Z\{\$]#([a-zA-Z][a-zA-Z0-9]#)(*) ]]; do
+    (( __start=__idx-${#PREBUFFER}+${mbegin[1]}-1, __end=__idx-${#PREBUFFER}+${mend[1]}+1-1, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}for-loop-variable]}")
+    __idx+=${mend[1]}
+    _mybuf="${match[2]}"
+done
+
+_mybuf="$__arg"
+__idx=_start_pos
+while [[ "$_mybuf" = (#b)[^+\<\>=:\*\|\&\^\~-]#([+\<\>=:\*\|\&\^\~-]##)(*) ]]; do
+    (( __start=__idx-${#PREBUFFER}+${mbegin[1]}-1, __end=__idx-${#PREBUFFER}+${mend[1]}+1-1, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}for-loop-operator]}")
+    __idx+=${mend[1]}
+    _mybuf="${match[2]}"
+done
+
+_mybuf="$__arg"
+__idx=_start_pos
+while [[ "$_mybuf" = (#b)[^0-9]#([0-9]##)(*) ]]; do
+    (( __start=__idx-${#PREBUFFER}+${mbegin[1]}-1, __end=__idx-${#PREBUFFER}+${mend[1]}+1-1, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}for-loop-number]}")
+    __idx+=${mend[1]}
+    _mybuf="${match[2]}"
+done
+
+if [[ "$__arg" = (#b)[^\;]#(\;)[\ ]# ]]; then
+    (( __start=_start_pos-${#PREBUFFER}+${mbegin[1]}-1, __end=_start_pos-${#PREBUFFER}+${mend[1]}+1-1, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}for-loop-separator]}")
+fi
+
+already_added=1
+
+# vim:ft=zsh:et:sw=4
