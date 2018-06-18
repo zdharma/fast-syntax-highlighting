@@ -1,4 +1,4 @@
-# right brace, i.e. $'\x7d' == }
+# right brace, i.e. `}' ($'\x7d')
 #
 #     Man: Additionally, `tt(})' is recognized in any position if neither the
 #     tt(IGNORE_BRACES) option nor the tt(IGNORE_CLOSE_BRACES) option is set.

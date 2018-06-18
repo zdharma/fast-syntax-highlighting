@@ -1,3 +1,6 @@
 # 'F' - (( after for
 (( this_word & 32 )) && braces_stack='F'"$braces_stack" && __style=${FAST_THEME_NAME}builtin
+
+return 0
+
 # vim:ft=zsh:et:sw=4

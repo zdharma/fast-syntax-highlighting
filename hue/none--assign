@@ -30,4 +30,6 @@ integer jtmp=${__arg[(b:itmp+2:i)$ctmp]} jjtmp=${__arg[(b:iitmp+2:i)$dtmp]}
         (( _start_pos = _start_pos - itmp + 1, 1 > 0 ))
     }
 
+return 0
+
 # vim:ft=zsh:et:sw=4

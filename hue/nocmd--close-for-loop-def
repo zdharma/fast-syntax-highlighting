@@ -1,4 +1,6 @@
 # 'F' - (( after for
 [[ "${braces_stack[1]}" = "F" ]] && braces_stack[1]="" && __style=${FAST_THEME_NAME}builtin
 
+return 0
+
 # vim:ft=zsh:et:sw=4

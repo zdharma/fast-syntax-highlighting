@@ -11,4 +11,5 @@ elif [[ "${FAST_HIGHLIGHT[cache-path-${__arg}-${_start_pos}]}" -eq 1 ]]; then
 else
     __style=${FAST_THEME_NAME}default
 fi
+
 # vim:ft=zsh:et:sw=4

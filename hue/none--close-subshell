@@ -1,4 +1,6 @@
 # )
 [[ $braces_stack[1] == "R" ]] && { braces_stack[1]=""; __style=${FAST_THEME_NAME}reserved-word; }
 
+return 0
+
 # vim:ft=zsh:et:sw=4

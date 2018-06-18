@@ -1,4 +1,6 @@
 __style=${FAST_THEME_NAME}builtin
 [[ $braces_stack[1] == "A" ]] && braces_stack[1]=""
 
+return 0
+
 # vim:ft=zsh:et:sw=4
