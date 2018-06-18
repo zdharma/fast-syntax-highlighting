@@ -558,7 +558,7 @@ FAST_ZPATH_HOOKS=(
    # in_redirection || BIT_regular || BIT_sudo_opt || BIT_sudo_arg
    elif (( in_redirection + this_word & 14 ))
    then # $__arg is a non-command word
-     -fast-hue-nocmd-choose
+     [[ -n "${FAST_HIGHLIGHT[nc-$__arg]}" ]] && ${FAST_HIGHLIGHT[nc-$__arg]} || -fast-hue-nocmd-choose
    elif (( this_word & 128 ))
    then
      (( next_word = (next_word | 2) & ~129 ))
