@@ -357,64 +357,44 @@ FAST_ZPATH_HOOKS=(
   for __arg in ${interactive_comments-${(z)__buf}} \
              ${interactive_comments+${(zZ+c+)__buf}}; do
 
-    # Initialize $next_word to its default value?
+    # Initialize loop cycle
     (( in_redirection = in_redirection > 0 ? in_redirection - 1 : in_redirection ));
     (( next_word = (in_redirection == 0) ? 2 : next_word )) # else Stall $next_word.
     (( next_word = next_word | (this_word & (BIT_case_code|8192)) ))
-
-    #
-    #   $already_added       (see next paragraph)
-    #   $__style               how to highlight $__arg
-    #   $in_array_assignment boolean flag for "between '(' and ')' of array assignment"
-    #   $highlight_glob      boolean flag for "'noglob' is in effect"
-    #
-    already_added=0
-    __style=${FAST_THEME_NAME}unknown-token
-    if (( this_word & 1 )); then
-      in_array_assignment=0
-      [[ $__arg == 'noglob' ]] && highlight_glob=0
-    fi
-
     __asize=${#__arg}
 
-    # Compute the new $_start_pos and $_end_pos, skipping over whitespace in $__buf.
+    # Reset state of working variables
+    already_added=0
+    __style=${FAST_THEME_NAME}unknown-token
+    (( this_word & 1 )) && { in_array_assignment=0; [[ $__arg == 'noglob' ]] && highlight_glob=0; }
+
     if [[ $__arg == ';' ]] ; then
       [[ "${braces_stack[1]}" = 'T' ]] && braces_stack[1]=""
 
-      # We're looking for either a semicolon or a newline, whichever comes
-      # first.  Both of these are rendered as a ";" (SEPER) by the ${(z)..}
-      # flag.
-      #
-      # We can't use the (Z+n+) flag because that elides the __end-of-command
-      # token altogether, so 'echo foo\necho bar' (two commands) becomes
-      # indistinguishable from 'echo foo echo bar'
+      # Both ; and \n are rendered as a ";" (SEPER) by the ${(z)..} flag.
       needle=$';\n'
       [[ "$proc_buf" = (#b)[^$needle]#([$needle]##)* ]] && offset=${mbegin[1]}-1
       (( _start_pos += offset ))
       (( _end_pos = _start_pos + __asize ))
 
-      # Do not run default code for case when there is a new line
-      # It shouldn't be treated as ';', i.e. shouldn't be highlighted
-      # as unknown-token when appears after command-starting __arg like "{"
-      if [[ "${proc_buf[offset+1]}" = $'\n' ]]; then
-        (( this_word & BIT_case_item )) || { (( in_array_assignment )) && (( this_word = 2 | (this_word & BIT_case_code) )) || { (( this_word = 1 | (this_word & BIT_case_code) )); highlight_glob=1; }; }
-        in_redirection=0
-        proc_buf="${proc_buf[offset + __asize + 1,__len]}"
-        _start_pos=$_end_pos
-      else
-        # One more short path – for ';' command separator
-        (( this_word & BIT_case_item )) || { (( in_array_assignment )) && (( this_word = 2 | (this_word & BIT_case_code) )) || { (( this_word = 1 | (this_word & BIT_case_code) )); highlight_glob=1; }; }
-        in_redirection=0
-        [[ "${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}commandseparator]}" != "none" ]] && (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}commandseparator]}")
-        proc_buf="${proc_buf[offset + __asize + 1,__len]}"
-        _start_pos=$_end_pos
-      fi
+      # Prepare next loop cycle
+      (( this_word & BIT_case_item )) || { (( in_array_assignment )) && (( this_word = 2 | (this_word & BIT_case_code) )) || { (( this_word = 1 | (this_word & BIT_case_code) )); highlight_glob=1; }; }
+      in_redirection=0
+      proc_buf="${proc_buf[offset + __asize + 1,__len]}"
+
+      # Chance to highlight ';'
+      [[ "${proc_buf[offset+1]}" != $'\n' ]] && \
+        [[ "${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}commandseparator]}" != "none" ]] && \
+          (( __start=_start_pos-${#PREBUFFER}, __end=_end_pos-${#PREBUFFER}, __start >= 0 )) && \
+            reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}commandseparator]}")
 
       # ZPath run
       -fast-match-trajectories "$active_command"
       for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done
       FAST_EVENTS=()
       active_command=""
+
+      _start_pos=$_end_pos
       continue
     else
       offset=0
@@ -422,8 +402,8 @@ FAST_ZPATH_HOOKS=(
           # The first, outer parenthesis
           offset="${mend[1]}"
       fi
-      ((_start_pos+=offset))
-      ((_end_pos=_start_pos+__asize))
+      (( _start_pos += offset ))
+      (( _end_pos = _start_pos + __asize ))
 
       # No-hit will result in value 0
       __arg_type=${__FAST_HIGHLIGHT_TOKEN_TYPES[$__arg]}
@@ -521,7 +501,6 @@ FAST_ZPATH_HOOKS=(
      __style=${FAST_THEME_NAME}reserved-word # de facto a reserved word, although not de jure
      (( next_word = 1 | (this_word & BIT_case_code) ))
    elif (( this_word & 1 )) && (( in_redirection == 0 )) || [[ "${braces_stack[1]}" = 'T' ]]; then
-     active_command="$__arg"
      if (( __arg_type == 1 )); then
       __style=${FAST_THEME_NAME}precommand
       [[ "$__arg" = "command" || "$__arg" = "exec" ]] && (( next_word = next_word | 64 ))
