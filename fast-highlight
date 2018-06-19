@@ -508,12 +508,8 @@ FAST_ZPATH_HOOKS=(
       (( next_word = next_word | 4 ))
       (( next_word = next_word | 1 ))
      else
-       # Special-case: command word is '$foo', like that, without braces or anything.
-       #
        # That's not entirely correct --- if the parameter's value happens to be a reserved
-       # word, the parameter expansion will be highlighted as a reserved word --- but that
-       # incorrectness is outweighed by the usability improvement of permitting the use of
-       # parameters that refer to commands, functions, and builtins.
+       # word, the parameter expansion will be highlighted as a reserved word.
        _mybuf="${(Q)__arg}"
        if [[ $_mybuf == \$* ]] && (( ${+parameters} )) && \
          [[ $_mybuf = (#b)\$([a-zA-Z_][a-zA-Z0-9_]#|[0-9]##)(/*|) || $_mybuf = (#b)\$\{([a-zA-Z_][a-zA-Z0-9_]#|[0-9]##)\}(/*|) ]] && \
@@ -522,7 +518,7 @@ FAST_ZPATH_HOOKS=(
        elif [[ "${braces_stack[1]}" = 'T' ]]; then
          REPLY=none
        else
-         : ${expanded_path::=${(Q)~__arg}}
+         : ${expanded_path::=${~_mybuf}}
          -fast-highlight-main-type $expanded_path
        fi
 
