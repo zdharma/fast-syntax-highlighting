@@ -7,32 +7,30 @@
 #                the parser and chroma took
 #      
 
+typeset -ga __reply
 __reply=()
-__list=( "${(@)${(on@)FAST_ZPATH_HOOKS[(K)$1]}##[0-9]##. }" )
+__list=( ${${(on)FAST_ZPATH_HOOKS[(K)$1]}##[0-9]##.[\ ]#} )
 
-local __run_command
 integer __fe_size="${#FAST_EVENTS}" __inp_size
 
-for __work_buf in ${__list[@]}; do  # iterate over matched ZPaths
+for __work_buf in $__list; do  # iterate over matched ZPaths
     __idx=0     # index in FAST_EVENTS
     _end_idx=0  # index in __capture
 
-    __inputs=( "${(0@)__work_buf}" )  # split ZPath
-    __run_command="${__inputs[-1]##*$'\1'[[:blank:]]#}"
-    __inputs[-1]="${__inputs[-1]%%[[:blank:]]#$'\1'*}"
-    __inp_size="${#__inputs}"
+    __inputs=( ${(0)__work_buf} )  # split ZPath, first goes RUN spec
+    __inp_size=$(( ${#__inputs} - 1 ))
 
     (( __inp_size > __fe_size )) && continue
 
-    for _mybuf in ${__inputs[@]}; do  # iterate over nodes in the ZPath
+    for _mybuf in ${__inputs[2,__inp_size+1]}; do  # iterate over nodes in the ZPath
         # Case: matched, want next
         (( ++ __idx, __idx > __fe_size )) && break
         while (( 1 )); do  # iterate over nodes in FAST_EVENTS
             mbegin[1]="" mbegin[2]="" mbegin[3]=""
             [[ "${FAST_EVENTS[__idx]}" = (#b)${~_mybuf} ]] && {
-                [[ "${mbegin[1]}" = <-> ]] && __capture[_end_idx+=1]="${match[1]}"
-                [[ "${mbegin[2]}" = <-> ]] && __capture[_end_idx+=1]="${match[2]}"
-                [[ "${mbegin[3]}" = <-> ]] && __capture[_end_idx+=1]="${match[3]}"
+                [[ ${mbegin[1]} = <-> ]] && __capture[_end_idx+=1]="${match[1]}"
+                [[ ${mbegin[2]} = <-> ]] && __capture[_end_idx+=1]="${match[2]}"
+                [[ ${mbegin[3]} = <-> ]] && __capture[_end_idx+=1]="${match[3]}"
                 break
             } || {
                 # Case: no match, want next
@@ -41,7 +39,7 @@ for __work_buf in ${__list[@]}; do  # iterate over matched ZPaths
         done
     done
 
-    (( __idx <= __fe_size )) && __reply+=( "$__run_command" )
+    (( __idx <= __fe_size )) && __reply+=( ${__inputs[1]} )
 done
 
 (( ${#__reply} )) && return 0 || return 1

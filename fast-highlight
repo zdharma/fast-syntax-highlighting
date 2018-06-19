@@ -188,7 +188,7 @@ typeset -ga FAST_EVENTS
 typeset -gA FAST_ZPATH_HOOKS
 FAST_ZPATH_HOOKS=(
   # Git with optional version string
-  "git(-*)#" $'1. START\0SUB-commit\0OPTARG:-m|OPTARG:--message\0ARG:(*)\0OFFSET:([0-9]##)\0POS:([0-9]##);([0-9]##) \1 RUN:chroma/-spell.ch 2 ${__capture[1]} $(( __capture[3]+__capture[2] )) ${__capture[4]} 0:0:1:1:commit:1:-m:'
+  "git(-*)#" $'1. RUN:chroma/-spell.ch 2 ${__capture[1]} $(( __capture[3]+__capture[2] )) ${__capture[4]} 0:0:1:1:commit:1:-m:\0START\0SUB-commit\0OPTARG:-m|OPTARG:--message\0ARG:(*)\0OFFSET:([0-9]##)\0POS:([0-9]##);([0-9]##)'
 )
 
 # Get the type of a command.
@@ -484,8 +484,6 @@ FAST_ZPATH_HOOKS=(
 
    # ZPath run
    if [[ "$__arg_type" -ne 3 && "$BUFFER" = *${__arg}[[:blank:]]# ]]; then
-   #if [[ "$__arg_type" -ne 3 && -n "${(M)BUFFER%%${__arg}[[:blank:]]#}" ]]; then
-   #if [[ "${${BUFFER%%[[:blank:]]##}[-$__asize,-1]}" = "$__arg" && "$__arg_type" -ne 3 ]]; then
       -fast-match-trajectories "$active_command"
       FAST_EVENTS=()
       for __tmp in "${__reply[@]}"; do eval "${__tmp#RUN:}"; done

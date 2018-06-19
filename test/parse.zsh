@@ -87,7 +87,7 @@ git st .
 git diff --cached
 git commit --allow-empty
 git checkout themes/zdharma.ini
-git commit --amend
+git commit -m \"Yes\"
 git tag -a 'v1.18' -m 'Here-string is highlighted, descriptor-variables passed to exec are correctly highlighted'
 git tag -l -n9
 git checkout cb66b11
