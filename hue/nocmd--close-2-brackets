@@ -1,5 +1,5 @@
 __style=${FAST_THEME_NAME}builtin
-[[ $braces_stack[1] == "A" ]] && braces_stack[1]=""
+braces_stack="${braces_stack#A}"
 
 return 0
 
