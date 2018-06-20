@@ -734,7 +734,8 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
       _mybuf="${match[8]}"
 
       # ADD
-      (( __start=__idx-${#PREBUFFER}, __end=_end_idx-${#PREBUFFER}, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}back-or-dollar-double-quoted-argument]}${1:+,$1}")
+      (( __start=__idx-${#PREBUFFER}, __end=_end_idx-${#PREBUFFER}, __start >= 0 )) && \
+        reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}back-or-dollar-double-quoted-argument]}${1:+,$1}")
 
       __idx=_end_idx
     }
@@ -819,18 +820,9 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
   done
 }
 
-# -------------------------------------------------------------------------------------------------
-# Main highlighter initialization
-# -------------------------------------------------------------------------------------------------
-
 -fast-highlight-init() {
   __fast_highlight_main__command_type_cache=()
 }
-
-# -------------------------------------------------------------------------------------------------
-# Other
-# -------------------------------------------------------------------------------------------------
-
 
 typeset -ga FSH_LIST
 -fsh_sy_h_shappend() {
