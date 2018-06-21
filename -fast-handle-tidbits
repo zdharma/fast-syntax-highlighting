@@ -4,8 +4,9 @@
 emulate -LR zsh
 setopt typesetsilent extendedglob noshortloops localtraps promptsubst noksharrays
 
-typeset -gi __fshtb_call_count __fshtb_restart __fsh_x=1 __fsh_y=1 __fsh_trap_ran
-typeset -g __fshtb_model
+typeset -gi __fshtb_call_count __fshtb_restart __fsh_x __fsh_y __fsh_trap_ran
+typeset -g __fshtb_model __fshtb_cur_tidbit
+typeset -ga __fshtb_cur_keys __fshtb_cur_meta
 
 (( __fshtb_call_count ++ ))
 trap '(( __fshtb_call_count -- )); return 0;' INT
@@ -15,6 +16,8 @@ color=( red green blue yellow cyan magenta black white )
 
 function -fsh_tidbits_main {
     if [[ "$__fshtb_call_count" -eq 1 || "$__fshtb_restart" -eq 1 ]]; then
+        __fsh_x=1 __fsh_y=1
+        __fshtb_cur_tidbit="" __fshtb_cur_keys=() __fshtb_cur_meta=()
     else
         [[ "$WIDGET" = *-handle-tidbits ]] && __fsh_y+=1
         [[ "$WIDGET" = *-backwards ]] && __fsh_y=__fsh_y-1
@@ -31,7 +34,7 @@ function -fsh_tidbits_main {
     # Load tidbits
     local -A out hsh
     fast-read-ini-file "$FAST_BASE_DIR/tidbits/${active_command}.ini" out ""
-    local tidbit key ent
+    local tidbit key meta ent
 
     # Normalize styles
     for key in ${out[(I)<style>_*]}; do
@@ -45,11 +48,24 @@ function -fsh_tidbits_main {
     # Generate interface
     local -a entries keys
     __fshtb_model=""
+    idx=0
     for tidbit in "${(@s,;,)out[<meta>_order]}"; do
+        idx+=1
         __fshtb_model+=$'\n'"[$tidbit]"$'\0'
         hsh=( ${(kv)out[(I)<${(q)tidbit}>_*]} )  # whole ${tidbit} section, all entries
         entries=( ${(k)hsh} )
         entries=( /(e:'reply=($entries)':oe:'REPLY=${hsh[${REPLY}]}':) )  # keys sorted on values
+
+        if (( idx == __fsh_y )); then
+            __fshtb_cur_tidbit="$tidbit"
+            __fshtb_cur_keys=( "${entries[@]}" )
+            __fshtb_cur_meta=()
+            for key in "${__fshtb_cur_keys[@]}"; do
+                meta="${out[$key]}"
+                meta="${(M)meta#[A-Z][0-9](#c1,2)}"
+                __fshtb_cur_meta+=( "$meta" )
+            done
+        fi
 
         for ent in $entries; do
             key="${${ent#<[^>]##>_}/_/ }"
