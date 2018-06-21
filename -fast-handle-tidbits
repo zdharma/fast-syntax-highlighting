@@ -56,14 +56,14 @@ function -fsh_tidbits_main {
 
     region_highlight=()
 
-    # Quoted with " or '
+    # Various quotations, wrappings with e.g. *
     local -a styles needles
     styles=( single-quoted double-quoted )
     needles=( "'" "\"" )
 
     FSH_LIST=()
     for (( idx=1; idx <= 2; ++ idx )); do
-        : ${__fshtb_model//(#m)${needles[idx]}[^${needles[idx]}]#${needles[idx]}/$(( fsh_sy_h_append_ex($MBEGIN+1-1,$MEND-1-1,$idx) ))}
+        : ${__fshtb_model//(#m)${needles[idx]}[^${needles[idx]}]#${needles[idx]}/$(( fsh_sy_h_append_ex(MBEGIN+1-1,MEND-1-1,idx) ))}
         __fshtb_model="${__fshtb_model//(#b)${needles[idx]}([^${needles[idx]}]#)${needles[idx]}/${match[1]}}"
     done
 
@@ -71,6 +71,19 @@ function -fsh_tidbits_main {
     for ent in "${(on)FSH_LIST[@]}"; do
         region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - idx )) $(( offset + ${${(s: :)ent}[2]} - idx )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
         idx+=2
+    done
+
+    # Combo and option identifiers
+    styles=( combo-id opt-id )
+    needles=( "\[[^#][^\]]##\]" "\[[#][^\]]##\]" )
+
+    FSH_LIST=()
+    for (( idx=1; idx <= 2; ++ idx )); do
+        : ${__fshtb_model//(#m)${~needles[idx]}/$(( fsh_sy_h_append_ex(MBEGIN,MEND,idx) ))}
+    done
+
+    for ent in "${(on)FSH_LIST[@]}"; do
+        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} )) $(( offset + ${${(s: :)ent}[2]} )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
     done
 
     POSTDISPLAY="${__fshtb_model//$'\0'/ }"
@@ -207,8 +220,10 @@ if [[ "$__fshtb_call_count" -eq 1 ]]; then
 
     if zle .recursive-edit -K fshtb; then
         trap '' INT
+        POSTDISPLAY=""
     else
         trap '' INT
+        POSTDISPLAY=""
     fi
 
     # Restore self-insert, backward-delete-char, delete-char
