@@ -95,4 +95,4 @@ fi
 
 reply=( "${(s:;:)FAST_HIGHLIGHT[chroma-make-cache]}" )
 
-# vim:ft=zsh:et
+# vim:ft=zsh:et:sw=4

@@ -419,6 +419,10 @@ FAST_ZPATH_HOOKS=(
     if [[ -n ${interactive_comments+'set'} && $__arg == $histchars[3]* ]]; then
       if (( this_word & 3 )); then
         __style=${FAST_THEME_NAME}comment
+        if [[ "$__arg" = "#FSH"* ]]; then
+          zle -N -- -fast-handle-tidbits
+          zle -- -fast-handle-tidbits
+        fi
       else
         __style=${FAST_THEME_NAME}unknown-token # prematurely terminated
       fi
@@ -826,9 +830,15 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
 
 typeset -ga FSH_LIST
 -fsh_sy_h_shappend() {
-    FSH_LIST+=( "$(( $1 - 1 ));;$(( $2 ))" )
+    FSH_LIST+=( "$(( $1 - 1 ));;$2" )
 }
 
 functions -M fsh_sy_h_append 2 2 -fsh_sy_h_shappend
+
+-fsh_sy_h_shappend_ex() {
+    FSH_LIST+=( "$(( $1 - 1 )) $2 $3" )
+}
+
+functions -M fsh_sy_h_append_ex 3 3 -fsh_sy_h_shappend_ex
 
 # vim:ft=zsh:sw=2:sts=2

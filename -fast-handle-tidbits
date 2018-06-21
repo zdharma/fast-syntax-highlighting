@@ -1,0 +1,233 @@
+# -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# Copyright (c) 2018 Sebastian Gniazdowski
+
+emulate -LR zsh
+setopt typesetsilent extendedglob noshortloops localtraps promptsubst noksharrays
+
+typeset -gi __fshtb_call_count __fshtb_restart __fsh_x=1 __fsh_y=1
+typeset -g __fshtb_model
+
+(( __fshtb_call_count ++ ))
+trap '(( __fshtb_call_count -- )); return 0;' INT
+
+local -a color
+color=( red green blue yellow cyan magenta black white )
+
+function -fsh_tidbits_main {
+    if [[ "$__fshtb_call_count" -eq 1 || "$__fshtb_restart" -eq 1 ]]; then
+    else
+        [[ "$WIDGET" = *-handle-tidbits ]] && __fsh_y+=1
+        [[ "$WIDGET" = *-backwards ]] && __fsh_y=__fsh_y-1
+        [[ "$WIDGET" = *-left ]] && __fsh_x=__fsh_x-1
+        [[ "$WIDGET" = *-right ]] && __fsh_x+=1
+    fi
+
+    integer offset=${#BUFFER} idx
+
+    [[ ! -f "$FAST_BASE_DIR"/tidbits/"$active_command".ini ]] && return 0
+    [[ ! -r "$FAST_BASE_DIR"/tidbits/"$active_command".ini ]] && \
+        print -u2 "Tidbit for $active_command unreadable, aborting." && return 0
+
+    # Load tidbits
+    local -A out hsh
+    fast-read-ini-file "$FAST_BASE_DIR/tidbits/${active_command}.ini" out ""
+    local tidbit key ent
+
+    # Normalize styles
+    for key in ${out[(I)<style>_*]}; do
+        ent="${out[$key]}" 
+        [[ "$ent" = (${(~j:|:)color})* || "$ent" = [0-9]##* ]] && out[$key]="fg="${ent}
+    done
+
+    # Generate interface
+    local -a entries keys
+    __fshtb_model=""
+    for tidbit in "${(@s,;,)out[<meta>_order]}"; do
+        __fshtb_model+=$'\n'"[$tidbit]"$'\0'
+        hsh=( ${(kv)out[(I)<${(q)tidbit}>_*]} )  # whole ${tidbit} section, all entries
+        entries=( ${(k)hsh} )
+        entries=( /(e:'reply=($entries)':oe:'REPLY=${hsh[${REPLY}]}':) )  # keys sorted on values
+
+        for ent in $entries; do
+            __fshtb_model+="${${ent#<[^>]##>_}/_/ }:${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'
+        done
+        __fshtb_model="${__fshtb_model%$'\0'}"
+    done
+
+    region_highlight=()
+
+    # Quoted with " or '
+    local -a styles needles
+    styles=( single-quoted double-quoted )
+    needles=( "'" "\"" )
+
+    FSH_LIST=()
+    for (( idx=1; idx <= 2; ++ idx )); do
+        : ${__fshtb_model//(#m)${needles[idx]}[^${needles[idx]}]#${needles[idx]}/$(( fsh_sy_h_append_ex($MBEGIN+1-1,$MEND-1-1,$idx) ))}
+        __fshtb_model="${__fshtb_model//(#b)${needles[idx]}([^${needles[idx]}]#)${needles[idx]}/${match[1]}}"
+    done
+
+    idx=0
+    for ent in "${(on)FSH_LIST[@]}"; do
+        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - idx )) $(( offset + ${${(s: :)ent}[2]} - idx )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
+        idx+=2
+    done
+
+    POSTDISPLAY="${__fshtb_model//$'\0'/ }"
+
+    __fshtb_model="${__fshtb_model#$'\n'}"
+
+    # Cursor
+    local -a lines columns
+    lines=( "${(@f)__fshtb_model}" )
+    integer ysize=${#lines} xsize
+    (( __fsh_y > ysize )) && __fsh_y=ysize
+    (( __fsh_y <= 0 )) && __fsh_y=1
+    columns=( "${(0@)lines[__fsh_y]}" )
+    xsize=${#columns}
+    (( __fsh_x > xsize )) && __fsh_x=xsize
+    (( __fsh_x <= 0 )) && __fsh_x=1
+
+    integer offset2=0 idx=0
+    for (( idx = 1; idx < __fsh_y; ++ idx )); do
+        offset2+=${#lines[idx]}+1
+    done
+    for (( idx = 1; idx < __fsh_x; ++ idx )); do
+        offset2+=${#columns[idx]}+1
+    done
+
+    region_highlight+=( "$(( offset + offset2 )) $(( offset + offset2 + ${#columns[idx]} + 1 )) fg=yellow,bold" )
+}
+
+-fsh_tidbits_main
+
+_fshtb_simulate_widget() {
+    (( __fshtb_call_count ++ ))
+    -fsh_tidbits_main
+}
+
+_fshtb_self_insert() {
+    LBUFFER+="${KEYS[-1]}"
+    __fshtb_restart="1"
+    _fshtb_simulate_widget
+}
+
+_fshtb_backward_delete_char() {
+    LBUFFER="${LBUFFER%?}"
+    __fshtb_restart="1"
+    _fshtb_simulate_widget
+}
+
+_fshtb_delete_char() {
+    RBUFFER="${RBUFFER#?}"
+    __fshtb_restart="1"
+    _fshtb_simulate_widget
+}
+
+-fshtb_backward_kill_word() {
+    builtin zle .backward-kill-word
+    __fshtb_restart="1"
+    _fshtb_simulate_widget
+}
+
+if [[ "$__fshtb_call_count" -eq 1 ]]; then
+    bindkey -N fshtb emacs
+
+    local down_widget="-fast-handle-tidbits" up_widget="-fast-handle-tidbits-backwards"
+    local left_widget="-fast-handle-tidbits-left" right_widget="-fast-handle-tidbits-right"
+
+    # Manual, termcap, terminfo
+    bindkey -M fshtb '^[OA' "$up_widget"
+    bindkey -M fshtb '^[OB' "$down_widget"
+    bindkey -M fshtb '^[OD' "$left_widget"
+    bindkey -M fshtb '^[OC' "$right_widget"
+    bindkey -M fshtb '^[[A' "$up_widget"
+    bindkey -M fshtb '^[[B' "$down_widget"
+    bindkey -M fshtb '^[[D' "$left_widget"
+    bindkey -M fshtb '^[[C' "$right_widget"
+    [[ -n "$termcap[ku]" ]] && bindkey -M fshtb "$termcap[ku]" "$up_widget"
+    [[ -n "$termcap[kd]" ]] && bindkey -M fshtb "$termcap[kd]" "$down_widget"
+    [[ -n "$termcap[kl]" ]] && bindkey -M fshtb "$termcap[ku]" "$left_widget"
+    [[ -n "$termcap[kr]" ]] && bindkey -M fshtb "$termcap[kd]" "$hown_widget"
+    [[ -n "$termcap[kD]" ]] && bindkey -M fshtb "$termcap[kD]" .delete-char
+    [[ -n "$terminfo[kcuu1]" ]] && bindkey -M fshtb "$terminfo[kcuu1]" "$up_widget"
+    [[ -n "$terminfo[kcud1]" ]] && bindkey -M fshtb "$terminfo[kcud1]" "$down_widget"
+    [[ -n "$terminfo[kcub1]" ]] && bindkey -M fshtb "$terminfo[kcuu1]" "$left_widget"
+    [[ -n "$terminfo[kcuf1]" ]] && bindkey -M fshtb "$terminfo[kcud1]" "$right_widget"
+    [[ -n "$terminfo[kdch1]" ]] && bindkey -M fshtb "$terminfo[kdch1]" .delete-char
+
+    # More bindkeys, to remove influence of plugins that overload things (z-sy-h, z-au-s)
+    #bindkey -M fshtb '^[[D' .backward-char
+    #bindkey -M fshtb '^[[C' .forward-char
+    [[ -n "$termcap[kl]" ]] && bindkey -M fshtb "$termcap[kl]" .backward-char
+    [[ -n "$termcap[kr]" ]] && bindkey -M fshtb "$termcap[kr]" .forward-char
+    [[ -n "$terminfo[kcub1]" ]] && bindkey -M fshtb "$terminfo[kcub1]" .backward-char
+    [[ -n "$terminfo[kcuf1]" ]] && bindkey -M fshtb "$terminfo[kcuf1]" .forward-char
+
+    [[ -n "$termcap[kh]" ]] && bindkey -M fshtb "$termcap[kh]" .beginning-of-line
+    [[ -n "$termcap[@7]" ]] && bindkey -M fshtb "$termcap[@7]" .end-of-line
+    [[ -n "$terminfo[khome]" ]] && bindkey -M fshtb "$terminfo[khome]" .beginning-of-line
+    [[ -n "$terminfo[kend]" ]] && bindkey -M fshtb "$terminfo[kend]" .end-of-line
+    bindkey -M fshtb '^A' .beginning-of-line
+    bindkey -M fshtb '^E' .end-of-line
+    bindkey -M fshtb '^R' "$down_widget"
+
+    # Needed for Fedora 23, zsh-5.1.1
+    bindkey -M fshtb ' ' self-insert
+
+    # Substitute self-insert, backward-delete-char, delete-char
+    zle -A self-insert fshtb-saved-self-insert
+    zle -A backward-delete-char fshtb-saved-backward-delete-char
+    zle -A delete-char fshtb-saved-delete-char
+    zle -N self-insert _fshtb_self_insert
+    zle -N backward-delete-char _fshtb_backward_delete_char
+    zle -N delete-char _fshtb_delete_char
+    zle -N -- -fshtb_backward_kill_word
+    bindkey -M fshtb -- '^W' -fshtb_backward_kill_word
+
+    # OMZ does funny things with zle-keymap-select
+    zle -la zle-keymap-select && {
+        zle -A zle-keymap-select fshtb-saved-zle-keymap-select
+        zle -D zle-keymap-select
+    }
+
+    # Override ourselves with what we actually are
+    # because zsh-autosuggestions change us
+    zle -A -- "$down_widget" fshtb-saved-"$down_widget"
+    zle -A -- "$up_widget" fshtb-saved-"$up_widget"
+    zle -A -- "$left_widget" fshtb-saved-"$left_widget"
+    zle -A -- "$right_widget" fshtb-saved-"$right_widget"
+    zle -N -- "$down_widget" _fshtb_simulate_widget
+    zle -N -- "$up_widget" _fshtb_simulate_widget
+    zle -N -- "$left_widget" _fshtb_simulate_widget
+    zle -N -- "$right_widget" _fshtb_simulate_widget
+
+    if zle .recursive-edit -K fshtb; then
+    else
+    fi
+
+    # Restore self-insert, backward-delete-char, delete-char
+    zle -A fshtb-saved-self-insert self-insert
+    zle -A fshtb-saved-backward-delete-char backward-delete-char
+    zle -A fshtb-saved-delete-char delete-char
+    zle -D fshtb-saved-self-insert fshtb-saved-backward-delete-char fshtb-saved-delete-char
+    zle -la fshtb-saved-zle-keymap-select && {
+        zle -A fshtb-saved-zle-keymap-select zle-keymap-select
+        zle -D fshtb-saved-zle-keymap-select
+    }
+
+    # Restore ourselves
+    zle -A fshtb-saved-"$down_widget" "$down_widget"
+    zle -A fshtb-saved-"$up_widget" "$up_widget"
+    zle -A fshtb-saved-"$left_widget" "$left_widget"
+    zle -A fshtb-saved-"$right_widget" "$right_widget"
+    zle -D fshtb-saved-"$down_widget" fshtb-saved-"$up_widget" fshtb-saved-"$left_widget" fshtb-saved-"$right_widget"
+
+    # Full reinitialisation at next call
+    __fshtb_call_count="0"
+
+elif (( __fshtb_call_count > 0 )); then
+    (( __fshtb_call_count -- ))
+fi
+
+# vim:ft=zsh:et:sw=4

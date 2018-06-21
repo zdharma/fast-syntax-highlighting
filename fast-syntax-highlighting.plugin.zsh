@@ -273,7 +273,7 @@ ZSH_HIGHLIGHT_MAXLENGTH=10000
 zmodload zsh/parameter 2>/dev/null
 
 autoload -Uz -- is-at-least fast-theme fast-read-ini-file -fast-run-git-command -fast-make-targets \
-                -fast-run-command -fast-match-trajectories
+                -fast-run-command -fast-match-trajectories -fast-handle-tidbits
 autoload -Uz -- chroma/-git.ch chroma/-example.ch chroma/-grep.ch chroma/-perl.ch chroma/-make.ch \
                 chroma/-awk.ch chroma/-vim.ch chroma/-source.ch chroma/-sh.ch chroma/-docker.ch \
                 chroma/-autoload.ch chroma/-ssh.ch chroma/-scp.ch chroma/-which.ch chroma/-printf.ch \
@@ -290,4 +290,8 @@ zstyle -s :plugin:fast-syntax-highlighting theme __fsyh_theme
 
 unset __fsyh_theme
 
+zle -N -- -fast-handle-tidbits
+zle -N -- -fast-handle-tidbits-backwards -fast-handle-tidbits
+zle -N -- -fast-handle-tidbits-left -fast-handle-tidbits
+zle -N -- -fast-handle-tidbits-right -fast-handle-tidbits
 -fast-highlight-fill-option-variables
