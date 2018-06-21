@@ -122,7 +122,7 @@ function -fsh_tidbits_main {
         offset2+=${#columns[idx]}+1
     done
 
-    region_highlight+=( "$(( offset + offset2 )) $(( offset + offset2 + ${#columns[idx]} + 1 )) fg=yellow,bold" )
+    region_highlight+=( "$(( offset + offset2 )) $(( offset + offset2 + ${#columns[idx]} + 1 )) ${out[<style>_cursor]}" )
 }
 
 -fsh_tidbits_main
