@@ -4,7 +4,7 @@
 emulate -LR zsh
 setopt typesetsilent extendedglob noshortloops localtraps promptsubst noksharrays
 
-typeset -gi __fshtb_call_count __fshtb_restart __fsh_x=1 __fsh_y=1
+typeset -gi __fshtb_call_count __fshtb_restart __fsh_x=1 __fsh_y=1 __fsh_trap_ran
 typeset -g __fshtb_model
 
 (( __fshtb_call_count ++ ))
@@ -202,8 +202,13 @@ if [[ "$__fshtb_call_count" -eq 1 ]]; then
     zle -N -- "$left_widget" _fshtb_simulate_widget
     zle -N -- "$right_widget" _fshtb_simulate_widget
 
+    __fsh_trap_ran=0
+    trap '(( __fsh_trap_ran == 0 )) && zle && { __fsh_trap_ran=1; zle .send-break; }' INT
+
     if zle .recursive-edit -K fshtb; then
+        trap '' INT
     else
+        trap '' INT
     fi
 
     # Restore self-insert, backward-delete-char, delete-char
