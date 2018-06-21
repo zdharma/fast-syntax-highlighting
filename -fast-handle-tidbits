@@ -92,6 +92,13 @@ function -fsh_tidbits_main {
         region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} )) $(( offset + ${${(s: :)ent}[2]} )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
     done
 
+    # Options highlight
+    FSH_LIST=()
+    : ${__fshtb_model//(#m)$'\0'-[^:]##:/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
+    for ent in "${(on)FSH_LIST[@]}"; do
+        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} )) $(( offset + ${${(s: :)ent}[2]} )) ${out[<style>_option-string]}" )
+    done
+
     POSTDISPLAY="${__fshtb_model//$'\0'/ }"
 
     __fshtb_model="${__fshtb_model#$'\n'}"
