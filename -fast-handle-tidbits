@@ -52,14 +52,17 @@ function -fsh_tidbits_main {
         entries=( /(e:'reply=($entries)':oe:'REPLY=${hsh[${REPLY}]}':) )  # keys sorted on values
 
         for ent in $entries; do
-            __fshtb_model+="${${ent#<[^>]##>_}/_/ }:${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'
+            key="${${ent#<[^>]##>_}/_/ }"
+            __fshtb_model+="$key:${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'
         done
         __fshtb_model="${__fshtb_model%$'\0'}"
     done
 
     region_highlight=()
 
-    # Various quotations, wrappings with e.g. *
+    # Highlight various quotations, wrappings with e.g. *.
+    # It removes some bits of text, so should be run as
+    # first highlighting code.
     local -a styles needles
     styles=( single-quoted double-quoted )
     needles=( "'" "\"" )
@@ -76,7 +79,7 @@ function -fsh_tidbits_main {
         idx+=2
     done
 
-    # Combo and option identifiers
+    # Highlight combo and option identifiers
     styles=( combo-id opt-id )
     needles=( "\[[^#][^\]]##\]" "\[[#][^\]]##\]" )
 
