@@ -36,7 +36,10 @@ function -fsh_tidbits_main {
     # Normalize styles
     for key in ${out[(I)<style>_*]}; do
         ent="${out[$key]}" 
-        [[ "$ent" = (${(~j:|:)color})* || "$ent" = [0-9]##* ]] && out[$key]="fg="${ent}
+
+        [[ "$ent" = bg:* ]] && out[$key]="bg=${ent#bg:}" || { \
+            [[ "$ent" = (${(~j:|:)color})* || "$ent" = [0-9]##* ]] && out[$key]="fg="${ent}
+        }
     done
 
     # Generate interface
