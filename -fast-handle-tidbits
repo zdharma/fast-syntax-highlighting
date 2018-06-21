@@ -114,14 +114,16 @@ function -fsh_tidbits_main {
     (( __fsh_x > xsize )) && __fsh_x=xsize
     (( __fsh_x <= 0 )) && __fsh_x=1
 
-    integer offset2=0 idx=0
+    integer offset2=0 offset3=0 idx=0
     for (( idx = 1; idx < __fsh_y; ++ idx )); do
         offset2+=${#lines[idx]}+1
     done
+    offset3=offset2
     for (( idx = 1; idx < __fsh_x; ++ idx )); do
         offset2+=${#columns[idx]}+1
     done
 
+    [[ "${lines[__fsh_y]}" != \[\#* ]] && region_highlight+=( "$(( offset + offset3 )) $(( offset + offset3 + ${#lines[__fsh_y]} + 1 )) ${out[<style>_cursorwide]}" )
     region_highlight+=( "$(( offset + offset2 )) $(( offset + offset2 + ${#columns[idx]} + 1 )) ${out[<style>_cursor]}" )
 }
 
