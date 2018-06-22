@@ -833,12 +833,18 @@ typeset -ga FSH_LIST
     FSH_LIST+=( "$(( $1 - 1 ));;$2" )
 }
 
-functions -M fsh_sy_h_append 2 2 -fsh_sy_h_shappend
+functions -M fsh_sy_h_append 2 2 -fsh_sy_h_shappend 2>/dev/null
 
 -fsh_sy_h_shappend_ex() {
     FSH_LIST+=( "$(( $1 - 1 )) $2 $3" )
 }
 
-functions -M fsh_sy_h_append_ex 3 3 -fsh_sy_h_shappend_ex
+functions -M fsh_sy_h_append_ex 3 3 -fsh_sy_h_shappend_ex 2>/dev/null
+
+-fsh_sy_h_shappend_ex2() {
+    FSH_LIST2+=( "$(( $1 - 1 )) $2 $3" )
+}
+
+functions -M fsh_sy_h_append_ex2 3 3 -fsh_sy_h_shappend_ex2 2>/dev/null
 
 # vim:ft=zsh:sw=2:sts=2

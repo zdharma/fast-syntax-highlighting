@@ -14,31 +14,47 @@ trap '(( __fshtb_call_count -- )); return 0;' INT
 local -a color
 color=( red green blue yellow cyan magenta black white )
 
+typeset -A template1
+template1=(
+    regular-combo    '"%opt[1,LAST][ ]" | "%desc[1,LAST][, ]{substr:10}" | "%combo-id" "%END"'
+    cursor-at-combo  '"%opt[1,3][ ]" | "%desc[1,3][, ]{}" | "%opt[4,LAST][, ]" | "%desc[4,LAST][, ]{}" | "%combo-id" "%END"'
+    regular-option   '"%opt[1,1][,]" | "%desc[1,1][][substr:10]" | "%option-id" "%END"'
+    cursor-at-option '"%opt[1,1][]" | "%desc[1,1][]" | "%option-id" "%END"'
+)
+
 function -fsh_tidbits_main {
     if [[ "$__fshtb_call_count" -eq 1 || "$__fshtb_restart" -eq 1 ]]; then
         __fsh_x=1 __fsh_y=1
         __fshtb_cur_tidbit="" __fshtb_cur_keys=() __fshtb_cur_meta=()
+        local update_xy=0
     else
-        [[ "$WIDGET" = *-handle-tidbits ]] && __fsh_y+=1
-        [[ "$WIDGET" = *-backwards ]] && __fsh_y=__fsh_y-1
-        [[ "$WIDGET" = *-left ]] && __fsh_x=__fsh_x-1
-        [[ "$WIDGET" = *-right ]] && __fsh_x+=1
+        local update_xy=1
     fi
-
-    integer offset=${#BUFFER} idx
 
     [[ ! -f "$FAST_BASE_DIR"/tidbits/"$active_command".ini ]] && return 0
     [[ ! -r "$FAST_BASE_DIR"/tidbits/"$active_command".ini ]] && \
         print -u2 "Tidbit for $active_command unreadable, aborting." && return 0
 
+    integer offset=${#BUFFER}
+
     # Load tidbits
-    local -A out hsh
+    local -A out
     fast-read-ini-file "$FAST_BASE_DIR/tidbits/${active_command}.ini" out ""
-    local tidbit key meta ent
+    local tidbit key meta ent tmp
+
+    [[ "$update_xy" = 1 ]] && {
+        [[ "$WIDGET" = *-handle-tidbits ]] && __fsh_y+=1
+        [[ "$WIDGET" = *-backwards ]] && (( __fsh_y =  (__fsh_y > 1) ? __fsh_y-1 : 1 ))
+        [[ "$WIDGET" = *-left ]] && (( __fsh_x = (__fsh_x > 1) ? __fsh_x-1 : 1 ))
+        [[ "$WIDGET" = *-right ]] && __fsh_x+=1
+
+        tmp=${#${(@s,;,)out[<meta>_order]}}
+        (( __fsh_y > tmp )) && __fsh_y=tmp
+    }
 
     # Normalize styles
     for key in ${out[(I)<style>_*]}; do
-        ent="${out[$key]}" 
+        ent="${out[$key]}"
 
         [[ "$ent" = bg:* ]] && out[$key]="bg=${ent#bg:}" || { \
             [[ "$ent" = (${(~j:|:)color})* || "$ent" = [0-9]##* ]] && out[$key]="fg="${ent}
@@ -46,17 +62,25 @@ function -fsh_tidbits_main {
     done
 
     # Generate interface
-    local -a entries keys
-    __fshtb_model=""
-    idx=0
+    local -a entries keys templ_bits
+    local -A hsh
+    local template_line
+    integer idx=0 idx2
+    __fshtb_model=$'\n'
     for tidbit in "${(@s,;,)out[<meta>_order]}"; do
-        idx+=1
-        __fshtb_model+=$'\n'"[$tidbit]"$'\0'
         hsh=( ${(kv)out[(I)<${(q)tidbit}>_*]} )  # whole ${tidbit} section, all entries
         entries=( ${(k)hsh} )
         entries=( /(e:'reply=($entries)':oe:'REPLY=${hsh[${REPLY}]}':) )  # keys sorted on values
 
+        idx+=1
         if (( idx == __fsh_y )); then
+            if [[ "$tidbit" != \[\#* ]]; then
+                template_line="${template1[cursor-at-combo]}"
+            else
+                template_line="${template1[cursor-at-option]}"
+            fi
+
+            # Also prepare outcome in case of ^M
             __fshtb_cur_tidbit="$tidbit"
             __fshtb_cur_keys=( "${entries[@]}" )
             __fshtb_cur_meta=()
@@ -65,13 +89,55 @@ function -fsh_tidbits_main {
                 meta="${(M)meta#[A-Z][0-9](#c1,2)}"
                 __fshtb_cur_meta+=( "$meta" )
             done
+        else
+            if [[ "$tidbit" != \[\#* ]]; then
+                template_line="${template1[regular-combo]}"
+            else
+                template_line="${template1[regular-option]}"
+            fi
         fi
 
-        for ent in $entries; do
-            key="${${ent#<[^>]##>_}/_/ }"
-            __fshtb_model+="$key:${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'
+
+        templ_bits=( "${(@Q)${(z@)template_line}}" )
+
+        local tbit idx_from idx_to separ code LAST=${#entries} content_added=0 first=1
+        for tbit in "${templ_bits[@]}"; do
+            if [[ "$tbit" = (#b)"%opt["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
+                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
+                for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
+                    ent=${entries[idx2]}
+                    key="${${ent#<[^>]##>_}/_/ }"
+                    (( first )) && __fshtb_model+="$key"$'\0'"$separ" || __fshtb_model+=$'\0'"$key"$'\0'"$separ"
+                    first=0
+                    content_added=1
+                done
+                (( content_added )) && __fshtb_model="${__fshtb_model%$'\0'$separ}"
+            elif [[ "$tbit" = (#b)"%desc["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
+                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
+                for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
+                    ent=${entries[idx2]}
+                    (( first )) && __fshtb_model+="${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'"$separ" || \
+                                    __fshtb_model+=$'\0'"${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'"$separ"
+                    first=0
+                    content_added=1
+                done
+            elif [[ "$tbit" = "%combo-id" ]]; then
+                (( first )) && __fshtb_model+="[$tidbit]" || __fshtb_model+=$'\0'"[$tidbit]"
+                first=0
+                content_added=1
+            elif [[ "$tbit" = "%END" ]]; then
+                content_added=0
+                break
+            else
+                if (( content_added )); then
+                    [[ "$tbit" = "+"* ]] && __fshtb_model+=$'\0'" ${tbit#+} "
+                    [[ "$tbit" != "+"* ]] && __fshtb_model+=$'\0'"$tbit"
+
+                    content_added=0
+                fi
+            fi
         done
-        __fshtb_model="${__fshtb_model%$'\0'}"
+        __fshtb_model+=$'\n'
     done
 
     region_highlight=()
@@ -79,6 +145,7 @@ function -fsh_tidbits_main {
     # Highlight various quotations, wrappings with e.g. *.
     # It removes some bits of text, so should be run as
     # first highlighting code.
+    integer zero_count
     local -a styles needles
     styles=( single-quoted double-quoted )
     needles=( "'" "\"" )
@@ -89,9 +156,18 @@ function -fsh_tidbits_main {
         __fshtb_model="${__fshtb_model//(#b)${needles[idx]}([^${needles[idx]}]#)${needles[idx]}/${match[1]}}"
     done
 
+    # Remember where \0 occured
+    local -a FSH_LIST2
+    FSH_LIST2=()
+    : ${__fshtb_model//(#m)$'\0'/$(( fsh_sy_h_append_ex2(MBEGIN,MEND,0) ))}
+
     idx=0
     for ent in "${(on)FSH_LIST[@]}"; do
-        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - idx )) $(( offset + ${${(s: :)ent}[2]} - idx )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
+        zero_count=0
+        for meta in "${(on)FSH_LIST2[@]}"; do
+            (( ${${(s: :)ent}[1]} - idx > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
+        done
+        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - idx - zero_count )) $(( offset + ${${(s: :)ent}[2]} - idx - zero_count )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
         idx+=2
     done
 
@@ -105,17 +181,25 @@ function -fsh_tidbits_main {
     done
 
     for ent in "${(on)FSH_LIST[@]}"; do
-        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} )) $(( offset + ${${(s: :)ent}[2]} )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
+        zero_count=0
+        for meta in "${(on)FSH_LIST2[@]}"; do
+            (( ${${(s: :)ent}[1]} > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
+        done
+        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - zero_count )) $(( offset + ${${(s: :)ent}[2]} - zero_count )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
     done
 
     # Options highlight
     FSH_LIST=()
     : ${__fshtb_model//(#m)$'\0'-[^:]##:/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
     for ent in "${(on)FSH_LIST[@]}"; do
-        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} )) $(( offset + ${${(s: :)ent}[2]} )) ${out[<style>_option-string]}" )
+        zero_count=0
+        for meta in "${(on)FSH_LIST2[@]}"; do
+            (( ${${(s: :)ent}[1]} > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
+        done
+        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - zero_count )) $(( offset + ${${(s: :)ent}[2]} - zero_count )) ${out[<style>_option-string]}" )
     done
 
-    POSTDISPLAY="${__fshtb_model//$'\0'/ }"
+    POSTDISPLAY="${__fshtb_model//[$'\0']/}"
 
     __fshtb_model="${__fshtb_model#$'\n'}"
 
@@ -139,8 +223,17 @@ function -fsh_tidbits_main {
         offset2+=${#columns[idx]}+1
     done
 
-    [[ "${lines[__fsh_y]}" != \[\#* ]] && region_highlight+=( "$(( offset + offset3 )) $(( offset + offset3 + ${#lines[__fsh_y]} + 1 )) ${out[<style>_cursorwide]}" )
-    region_highlight+=( "$(( offset + offset2 )) $(( offset + offset2 + ${#columns[idx]} + 1 )) ${out[<style>_cursor]}" )
+    zero_count=0
+    integer zero_count2=0 zero_count3=0 zero_count4=0
+    for meta in "${(on)FSH_LIST2[@]}"; do
+        (( offset3 > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
+        (( offset3 + ${#lines[__fsh_y]} + 1 > ${${(s: :)meta}[1]} - 1 )) && zero_count2+=1
+        (( offset2 > ${${(s: :)meta}[1]} - 1 )) && zero_count3+=1
+        (( offset2 + ${#columns[idx]} + 1 > ${${(s: :)meta}[1]} - 1 )) && zero_count4+=1
+    done
+    [[ "${lines[__fsh_y]}" != \[\#* ]] && region_highlight+=( "$(( offset + offset3 - zero_count )) $(( offset + offset3 + ${#lines[__fsh_y]} + 1 - zero_count2 )) ${out[<style>_cursorwide]}" )
+
+    region_highlight+=( "$(( offset + offset2 - zero_count3 )) $(( offset + offset2 + ${#columns[idx]} + 2 - zero_count4 )) ${out[<style>_cursor]}" )
 }
 
 -fsh_tidbits_main
