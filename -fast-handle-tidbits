@@ -96,20 +96,23 @@ function -fsh_tidbits_main {
         for tbit in "${templ_bits[@]}"; do
             if [[ "$tbit" = (#b)"%opt["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
                 idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
+                tmp=$'\0'"$separ"
                 for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
+                    (( idx2 == idx_to || idx2 == LAST )) && tmp=""
                     ent=${entries[idx2]}
                     key="${${ent#<[^>]##>_}/_/ }"
-                    (( first )) && __fshtb_model+="$key"$'\0'"$separ" || __fshtb_model+=$'\0'"$key"$'\0'"$separ"
+                    (( first )) && __fshtb_model+="$key"$tmp || __fshtb_model+=$'\0'"$key"$tmp
                     first=0
                     content_added=1
                 done
-                (( content_added )) && __fshtb_model="${__fshtb_model%$'\0'$separ}"
             elif [[ "$tbit" = (#b)"%desc["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
                 idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
+                tmp=$'\0'"$separ"
                 for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
+                    (( idx2 == idx_to || idx2 == LAST )) && tmp=""
                     ent=${entries[idx2]}
-                    (( first )) && __fshtb_model+="${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'"$separ" || \
-                                    __fshtb_model+=$'\0'"${hsh[$ent]#[A-Z][0-9](#c1,2)}"$'\0'"$separ"
+                    (( first )) && __fshtb_model+="${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp || \
+                                    __fshtb_model+=$'\0'"${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp
                     first=0
                     content_added=1
                 done
