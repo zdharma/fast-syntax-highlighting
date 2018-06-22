@@ -14,13 +14,6 @@ trap '(( __fshtb_call_count -- )); return 0;' INT
 local -a color
 color=( red green blue yellow cyan magenta black white )
 
-typeset -A template1
-template1=(
-    regular-combo    '"%opt[1,LAST][ ]" | "%desc[1,LAST][, ]{substr:10}" | "%combo-id" "%END"'
-    cursor-at-combo  '"%opt[1,3][ ]" | "%desc[1,3][, ]{}" | "%opt[4,LAST][, ]" | "%desc[4,LAST][, ]{}" | "%combo-id" "%END"'
-    regular-option   '"%opt[1,1][,]" | "%desc[1,1][][substr:10]" | "%option-id" "%END"'
-    cursor-at-option '"%opt[1,1][]" | "%desc[1,1][]" | "%option-id" "%END"'
-)
 
 function -fsh_tidbits_main {
     if [[ "$__fshtb_call_count" -eq 1 || "$__fshtb_restart" -eq 1 ]]; then
@@ -75,9 +68,9 @@ function -fsh_tidbits_main {
         idx+=1
         if (( idx == __fsh_y )); then
             if [[ "$tidbit" != \[\#* ]]; then
-                template_line="${template1[cursor-at-combo]}"
+                template_line="${out[<theme-default>_cursor-at-combo]}"
             else
-                template_line="${template1[cursor-at-option]}"
+                template_line="${out[<theme-default>_cursor-at-option]}"
             fi
 
             # Also prepare outcome in case of ^M
@@ -91,12 +84,11 @@ function -fsh_tidbits_main {
             done
         else
             if [[ "$tidbit" != \[\#* ]]; then
-                template_line="${template1[regular-combo]}"
+                template_line="${out[<theme-default>_regular-combo]}"
             else
-                template_line="${template1[regular-option]}"
+                template_line="${out[<theme-default>_regular-option]}"
             fi
         fi
-
 
         templ_bits=( "${(@Q)${(z@)template_line}}" )
 
@@ -121,7 +113,7 @@ function -fsh_tidbits_main {
                     first=0
                     content_added=1
                 done
-            elif [[ "$tbit" = "%combo-id" ]]; then
+            elif [[ "$tbit" = "%item-id" ]]; then
                 (( first )) && __fshtb_model+="[$tidbit]" || __fshtb_model+=$'\0'"[$tidbit]"
                 first=0
                 content_added=1
@@ -132,7 +124,6 @@ function -fsh_tidbits_main {
                 if (( content_added )); then
                     [[ "$tbit" = "+"* ]] && __fshtb_model+=$'\0'" ${tbit#+} "
                     [[ "$tbit" != "+"* ]] && __fshtb_model+=$'\0'"$tbit"
-
                     content_added=0
                 fi
             fi
