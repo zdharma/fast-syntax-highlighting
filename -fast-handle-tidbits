@@ -271,6 +271,7 @@ if [[ "$__fshtb_call_count" -eq 1 ]]; then
             done
         done
         BUFFER="${(j: :)new_wrds}"
+        CURSOR=${#BUFFER}
     else
         trap '' INT
         POSTDISPLAY=""
