@@ -184,7 +184,7 @@ function -fsh_tidbits_main {
 
     # Options highlight
     FSH_LIST=()
-    : ${__fshtb_model//(#m)$'\0'-[^:]##:/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
+    : ${__fshtb_model//(#m)[$'\0\n']-[^:]##:/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
     for ent in "${(on)FSH_LIST[@]}"; do
         zero_count=0
         for meta in "${(on)FSH_LIST2[@]}"; do
