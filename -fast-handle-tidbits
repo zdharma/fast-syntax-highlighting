@@ -252,26 +252,7 @@ if [[ "$__fshtb_call_count" -eq 1 ]]; then
     if zle .recursive-edit -K fshtb; then
         trap '' INT
         POSTDISPLAY=""
-        local -a wrds new_wrds
-        wrds=( "${(z)BUFFER}" )
-        local w
-        integer opt_count=0 arg_count=0 arg_active=0 opt_stop=0 mod_size=${#__fshtb_cur_keys} idx
-        for w in "${wrds[@]}"; do
-            arg_active=0
-            if [[ "$w" = -- ]]; then opt_stop=1
-            elif [[ "$w" = -* && "$opt_stop" -eq 0 ]]; then opt_count+=1
-            elif [[ "$w" != -* ]]; then arg_count+=1; arg_active=1; fi
-
-            new_wrds+=( "$w" )
-
-            for (( idx=1; idx <= mod_size; ++ idx )); do
-                if [[ "${__fshtb_cur_meta[idx]/(#b)[A-Z]([0-9]##)*/${match[1]}}" = "$arg_count" && "$arg_active" -eq 1 ]]; then
-                    new_wrds+=( ${${__fshtb_cur_keys[idx]#<[^>]##>_}//_/ } )
-                fi
-            done
-        done
-        BUFFER="${(j: :)new_wrds}"
-        CURSOR=${#BUFFER}
+        -fast-insert-options
     else
         trap '' INT
         POSTDISPLAY=""
