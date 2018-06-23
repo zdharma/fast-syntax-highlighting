@@ -92,7 +92,7 @@ function -fsh_tidbits_main {
 
         templ_bits=( "${(@Q)${(z@)template_line}}" )
 
-        local tbit idx_from idx_to separ code LAST=${#entries} content_added=0 first=1
+        local tbit idx_from idx_to isepar=":" separ code LAST=${#entries} content_added=0 first=1
         for tbit in "${templ_bits[@]}"; do
             if [[ "$tbit" = (#b)"%opt["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
                 idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
@@ -116,15 +116,15 @@ function -fsh_tidbits_main {
                     first=0
                     content_added=1
                 done
-            elif [[ "$tbit" = (#b)"%optdesc["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
-                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
+            elif [[ "$tbit" = (#b)"%optdesc["([^\],]#)","([^\]]#)\](\<([^\>]#)\>)(#c0,1)\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
+                idx_from="${match[1]}" idx_to="${match[2]}" isepar="${match[4]:-:}" separ="${match[5]}" code="${match[7]}"
                 tmp=$'\0'"$separ"
                 for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
                     (( idx2 == idx_to || idx2 == LAST )) && tmp=""
                     ent=${entries[idx2]}
                     key="${${ent#<[^>]##>_}/_/ }"
-                    (( first )) && __fshtb_model+="$key:${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp || \
-                                    __fshtb_model+=$'\0'"$key:${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp
+                    (( first )) && __fshtb_model+="$key$isepar${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp || \
+                                    __fshtb_model+=$'\0'"$key$isepar${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp
                     first=0
                     content_added=1
                 done
@@ -196,7 +196,7 @@ function -fsh_tidbits_main {
 
     # Options highlight
     FSH_LIST=()
-    : ${__fshtb_model//(#m)[$'\0\n']-[^:]##:/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
+    : ${__fshtb_model//(#m)[$'\0\n']-[^$isepar]##$isepar/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
     for ent in "${(on)FSH_LIST[@]}"; do
         zero_count=0
         for meta in "${(on)FSH_LIST2[@]}"; do
