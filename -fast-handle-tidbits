@@ -57,7 +57,7 @@ function -fsh_tidbits_main {
     # Generate interface
     local -a entries keys templ_bits
     local -A hsh
-    local template_line
+    local template_line layout_theme
     integer idx=0 idx2
     __fshtb_model=$'\n'
     for tidbit in "${(@s,;,)out[<meta>_order]}"; do
@@ -65,12 +65,13 @@ function -fsh_tidbits_main {
         entries=( ${(k)hsh} )
         entries=( /(e:'reply=($entries)':oe:'REPLY=${hsh[${REPLY}]}':) )  # keys sorted on values
 
+        layout_theme="${out[<style>_layout-theme]}"
         idx+=1
         if (( idx == __fsh_y )); then
             if [[ "$tidbit" != \[\#* ]]; then
-                template_line="${out[<theme-optdesc>_cursor-at-combo]}"
+                template_line="${out[<theme-$layout_theme>_cursor-at-combo]}"
             else
-                template_line="${out[<theme-optdesc>_cursor-at-option]}"
+                template_line="${out[<theme-$layout_theme>_cursor-at-option]}"
             fi
 
             # Also prepare outcome in case of ^M
@@ -84,9 +85,9 @@ function -fsh_tidbits_main {
             done
         else
             if [[ "$tidbit" != \[\#* ]]; then
-                template_line="${out[<theme-optdesc>_regular-combo]}"
+                template_line="${out[<theme-$layout_theme>_regular-combo]}"
             else
-                template_line="${out[<theme-optdesc>_regular-option]}"
+                template_line="${out[<theme-$layout_theme>_regular-option]}"
             fi
         fi
 
