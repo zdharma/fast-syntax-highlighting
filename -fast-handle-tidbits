@@ -35,11 +35,12 @@ function -fsh_tidbits_main {
     fast-read-ini-file "$FAST_BASE_DIR/tidbits/${active_command}.ini" out ""
     local tidbit key meta ent tmp
 
+    integer last_direction=0
     [[ "$update_xy" = 1 ]] && {
-        [[ "$WIDGET" = *-handle-tidbits ]] && __fsh_y+=1
-        [[ "$WIDGET" = *-backwards ]] && (( __fsh_y =  (__fsh_y > 1) ? __fsh_y-1 : 1 ))
-        [[ "$WIDGET" = *-left ]] && (( __fsh_x = (__fsh_x > 1) ? __fsh_x-1 : 1 ))
-        [[ "$WIDGET" = *-right ]] && __fsh_x+=1
+        [[ "$WIDGET" = *-handle-tidbits ]] && { __fsh_y+=1; last_direction=2; }
+        [[ "$WIDGET" = *-backwards ]] && { (( __fsh_y =  (__fsh_y > 1) ? __fsh_y-1 : 1 )); last_direction=-2; }
+        [[ "$WIDGET" = *-left ]] && { (( __fsh_x = (__fsh_x > 1) ? __fsh_x-1 : 1 )); last_direction=-1; }
+        [[ "$WIDGET" = *-right ]] && { __fsh_x+=1; last_direction=1; }
 
         tmp=${#${(@s,;,)out[<meta>_order]}}
         (( __fsh_y > tmp )) && __fsh_y=tmp
@@ -222,6 +223,7 @@ function -fsh_tidbits_main {
     (( __fsh_x <= 0 )) && __fsh_x=1
 
     integer offset2=0 offset3=0 idx=0
+
     for (( idx = 1; idx < __fsh_y; ++ idx )); do
         offset2+=${#lines[idx]}+1
     done
@@ -229,9 +231,23 @@ function -fsh_tidbits_main {
     for (( idx = 1; idx < __fsh_x; ++ idx )); do
         offset2+=${#columns[idx]}+1
     done
+    if (( last_direction == 1 && __fsh_x < xsize )); then
+        if [[ "${columns[idx]}" != *[a-zA-Z0-9]* ]]; then
+            __fsh_x+=1
+            offset2+=${#columns[idx]}+1
+            idx+=1
+        fi
+    elif (( last_direction == -1 && __fsh_x > 1 )); then
+        if [[ "${columns[idx]}" != *[a-zA-Z0-9]* ]]; then
+            __fsh_x=__fsh_x-1
+            offset2=offset2-${#columns[idx-1]}-1
+            idx=idx-1
+        fi
+    fi
 
     zero_count=0
     integer zero_count2=0 zero_count3=0 zero_count4=0
+
     for meta in "${(on)FSH_LIST2[@]}"; do
         (( offset3 > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
         (( offset3 + ${#lines[__fsh_y]} + 1 > ${${(s: :)meta}[1]} - 1 )) && zero_count2+=1
