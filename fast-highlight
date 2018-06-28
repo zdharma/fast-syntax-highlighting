@@ -575,8 +575,14 @@ FAST_ZPATH_HOOKS=(
       if [[ $__arg == ';' ]] && (( in_array_assignment )); then
         # literal newline inside an array assignment
         (( next_word = 2 | (next_word & BIT_case_code) ))
+      # 'A' in stack -> inside [[ ... ]]
       elif [[ -n "${braces_stack[(r)A]}" ]]; then
         (( next_word = 2 | (next_word & BIT_case_code) ))
+         (( next_word = 2 | (next_word & BIT_case_code) ))
+      # 'T' in stack -> inside assignment area
+      elif [[ "${braces_stack[1]}" = 'T' ]]; then
+        braces_stack[1]=""
+        (( next_word = 1 | (next_word & BIT_case_code) ))
       else
         (( next_word = 1 | (next_word & BIT_case_code) ))
         highlight_glob=1
