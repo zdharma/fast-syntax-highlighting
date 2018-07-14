@@ -192,9 +192,8 @@ cloning the plugin for you automatically the next time you start zsh.
 
 ### Oh-My-Zsh
 
-1. `cd ~/.oh-my-zsh/custom/plugins`
-2. `git clone https://github.com/zdharma/fast-syntax-highlighting.git`
-3. Add `fast-syntax-highlighting` to your plugin list
+1. `git clone https://github.com/zdharma/fast-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/fast-syntax-highlighting`
+2. Add `fast-syntax-highlighting` to your plugin list
 
 ### Zgen
 
