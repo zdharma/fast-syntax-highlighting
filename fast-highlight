@@ -222,13 +222,14 @@ FAST_ZPATH_HOOKS=(
     # falling through to the $() below, incurring a fork.  (Issue #354.)
     #
     # The second disjunct mimics the isrelative() C call from the zsh bug.
-    elif [[ $1 != */* || "${+ZSH_ARGZERO}" = "1" ]] && ! builtin type -w -- $1 >/dev/null 2>&1; then
+    elif is-at-least 5.0 && [[ $1 != */* || "${+ZSH_ARGZERO}" = "1" ]] && ! builtin type -w -- $1 >/dev/null 2>&1; then
       REPLY=none
     fi
   fi
 
-  [[ -z "$REPLY" ]] && REPLY="${$(LC_ALL=C builtin type -w -- $1 2>/dev/null)##*: }"
+  [[ -z "$REPLY" ]] && { is-at-least 5.0 && { REPLY="${$(LC_ALL=C builtin type -w -- $1 2>/dev/null)##*: }"; ((1)); } || REPLY=none; }
 
+  # For autocd
   [[ "$REPLY" = "none" ]] && {
     [[ -d "$1" ]] && REPLY="dirpath" || {
       for cdpath_dir in $cdpath; do

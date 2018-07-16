@@ -5,7 +5,7 @@ emulate -LR zsh
 setopt typesetsilent extendedglob noshortloops localtraps promptsubst noksharrays
 
 typeset -gi __fshtb_call_count __fshtb_restart __fsh_x __fsh_y __fsh_trap_ran
-typeset -g __fshtb_model __fshtb_cur_tidbit
+typeset -g __fshtb_model __cur_line __fshtb_cur_tidbit
 typeset -ga __fshtb_cur_keys __fshtb_cur_meta
 
 (( __fshtb_call_count ++ ))
@@ -13,7 +13,48 @@ trap '(( __fshtb_call_count -- )); return 0;' INT
 
 local -a color
 color=( red green blue yellow cyan magenta black white )
+local -a styles needles
 
+# Uses:
+# - array `styles', indexed by $3
+# - hash `out' addressed by strings from `styles'
+# - integer `offset', added to each final highlighting index
+#
+# Input:
+# $1 - start_idx, 1-based (normally it's 0-based)
+# $2 - end_idx, 1-based
+# $3 - index of style, in `styles' upper-scope array
+#
+# Output:
+# $FSH_LIST - array with ready to use region_highlight entries
+-fsh_sy_h_shappend_ex3() {
+    local ent
+    ent="$(( $1 - 1 )) $2 $3"
+    FSH_LIST+=( "$(( offset + ${${(s: :)ent}[1]} )) $(( offset + ${${(s: :)ent}[2]} )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
+}
+
+functions -M fsh_sy_h_append_ex3 3 3 -fsh_sy_h_shappend_ex3 2>/dev/null
+
+# Needs arrays styles & needles to be set
+function -fsh_add_highlights {
+    local val="$1" cur_len="$2" ent
+    integer idx
+
+    FSH_LIST=()
+    for (( idx=1; idx <= 2; ++ idx )); do
+    : ${val//(#m)${needles[idx]}[^${needles[idx]}]#${needles[idx]}/$(( fsh_sy_h_append_ex3(cur_len+MBEGIN+1-1,cur_len+MEND-1-1,idx) ))}
+    done
+    REPLY="${val//(#b)[${(j::)needles}]([^${(j::)needles}]#)[${(j::)needles}]/${match[1]}}"
+
+    # Highlight various quotations, wrappings with e.g. *.
+    # It removes some bits of text, so should be run as
+    # first highlighting code.
+    integer formatting_offset=0
+    for ent in "${(on)FSH_LIST[@]}"; do
+        COLORS+=( "$(( ${${(s: :)ent}[1]} - formatting_offset )) $(( ${${(s: :)ent}[2]} - formatting_offset )) ${${(s: :)ent}[3]}" )
+        formatting_offset+=2
+    done
+}
 
 function -fsh_tidbits_main {
     if [[ "$__fshtb_call_count" -eq 1 || "$__fshtb_restart" -eq 1 ]]; then
@@ -33,7 +74,7 @@ function -fsh_tidbits_main {
     # Load tidbits
     local -A out
     fast-read-ini-file "$FAST_BASE_DIR/tidbits/${active_command}.ini" out ""
-    local tidbit key meta ent tmp
+    local tidbit key val meta ent tmp
 
     integer last_direction=0
     [[ "$update_xy" = 1 ]] && {
@@ -56,11 +97,11 @@ function -fsh_tidbits_main {
     done
 
     # Generate interface
-    local -a entries keys templ_bits
+    local -a entries keys templ_bits COLORS
     local -A hsh
-    local template_line layout_theme
-    integer idx=0 idx2
-    __fshtb_model=$'\n'
+    local template_line layout_theme nul=$'\0' padding_str
+    integer idx=0 idx2 cur_len size padding
+    __fshtb_model=$'\n' __cur_line=""
     for tidbit in "${(@s,;,)out[<meta>_order]}"; do
         hsh=( ${(kv)out[(I)<${(q)tidbit}>_*]} )  # whole ${tidbit} section, all entries
         entries=( ${(k)hsh} )
@@ -69,7 +110,7 @@ function -fsh_tidbits_main {
         layout_theme="${out[<style>_layout-theme]}"
         idx+=1
         if (( idx == __fsh_y )); then
-            if [[ "$tidbit" != \[\#* ]]; then
+            if [[ "$tidbit" != \#* ]]; then
                 template_line="${out[<theme-$layout_theme>_cursor-at-combo]}"
             else
                 template_line="${out[<theme-$layout_theme>_cursor-at-option]}"
@@ -85,7 +126,7 @@ function -fsh_tidbits_main {
                 __fshtb_cur_meta+=( "$meta" )
             done
         else
-            if [[ "$tidbit" != \[\#* ]]; then
+            if [[ "$tidbit" != \#* ]]; then
                 template_line="${out[<theme-$layout_theme>_regular-combo]}"
             else
                 template_line="${out[<theme-$layout_theme>_regular-option]}"
@@ -95,43 +136,172 @@ function -fsh_tidbits_main {
         templ_bits=( "${(@Q)${(z@)template_line}}" )
 
         local tbit idx_from idx_to isepar=":" separ code LAST=${#entries} content_added=0 first=1
+        local stra stracol strb strbcol
         for tbit in "${templ_bits[@]}"; do
-            if [[ "$tbit" = (#b)"%opt["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
-                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
-                tmp=$'\0'"$separ"
+            if [[ "$tbit" = (#b)"%opt["([^\],]#)","([^\]]#)\]\[([^\]]#)\](#B)(\((#b)([^\),]#)","(#c0,1)([^\)]#)\))(#c0,1)(#B)(\{(#b)([^\}]#)\})(#c0,1) ]]; then
+                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" stra="${match[4]}" strb="${match[5]}"
+                code="${match[6]}"
+
+                [[ "$stra" = (#b)(*)/(*) ]] && stra="${match[1]}" stracol="${match[2]}"
+                [[ "$strb" = (#b)(*)/(*) ]] && strb="${match[1]}" strbcol="${match[2]}"
+
+                tmp="$separ"
                 for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
                     (( idx2 == idx_to || idx2 == LAST )) && tmp=""
+
+                    # stra
+                    if [[ -n "$stra" ]]; then
+                        [[ -n "$stracol" ]] && COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#stra} )) fg=$stracol" )
+                        __fshtb_model+="$stra"
+                        if (( first )); then
+                            (( idx == __fsh_y )) && __cur_line+="$stra"
+                        else
+                            (( idx == __fsh_y )) && __cur_line+=$'\0'"$stra"
+                        fi
+                        first=0
+                    fi
+
+
+                    # The option text
                     ent=${entries[idx2]}
                     key="${${ent#<[^>]##>_}/_/ }"
-                    (( first )) && __fshtb_model+="$key"$tmp || __fshtb_model+=$'\0'"$key"$tmp
+                    COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#key} )) ${out[<style>_option]}" )
+                    __fshtb_model+="$key"
+                    if (( first )) || [[ -n "$stra" ]]; then
+                        (( idx == __fsh_y )) && __cur_line+="$key"
+                    else
+                        (( idx == __fsh_y )) && __cur_line+=$'\0'"$key"
+                    fi
                     first=0
+
+                    # Strb
+                    if [[ -n "$strb" ]]; then
+                        [[ -n "$strbcol" ]] && COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#strb} )) fg=$strbcol" )
+                        __fshtb_model+="$strb"
+                        (( idx == __fsh_y )) && __cur_line+="$strb"
+                    fi
+
+                    __fshtb_model+="$tmp"
+                    (( idx == __fsh_y )) && __cur_line+="${tmp:+$nul$tmp}"
+
                     content_added=1
                 done
-            elif [[ "$tbit" = (#b)"%desc["([^\],]#)","([^\]]#)\]\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
-                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" code="${match[5]}"
-                tmp=$'\0'"$separ"
+            elif [[ "$tbit" = (#b)"%desc["([^\],]#)","([^\]]#)\]\[([^\]]#)\](#B)(\((#b)([^\),]#)","(#c0,1)([^\)]#)\))(#c0,1)(#B)(\{(#b)([^\}]#)\})(#c0,1) ]]; then
+                idx_from="${match[1]}" idx_to="${match[2]}" separ="${match[3]}" stra="${match[4]}" strb="${match[5]}"
+                code="${match[6]}"
+
+                [[ "$stra" = (#b)(*)/(*) ]] && stra="${match[1]}" stracol="${match[2]}"
+                [[ "$strb" = (#b)(*)/(*) ]] && strb="${match[1]}" strbcol="${match[2]}"
+
+                tmp="$separ"
+                # Used by -fsh_add_highlights
+                styles=( star-quoted double-quoted )
+                needles=( "*" "\"" )
+
                 for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
                     (( idx2 == idx_to || idx2 == LAST )) && tmp=""
+
+                    # stra
+                    if [[ -n "$stra" ]]; then
+                        [[ -n "$stracol" ]] && COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#stra} )) fg=$stracol" )
+                        __fshtb_model+="$stra"
+                        if (( first )); then
+                            (( idx == __fsh_y )) && __cur_line+="$stra"
+                        else
+                            (( idx == __fsh_y )) && __cur_line+=$'\0'"$stra"
+                        fi
+                        first=0
+                    fi
+
+                    # The description text
                     ent=${entries[idx2]}
-                    (( first )) && __fshtb_model+="${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp || \
-                                    __fshtb_model+=$'\0'"${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp
+
+                    # Highlights of "..." and *...*
+                    val="${hsh[$ent]#[A-Z][0-9](#c1,2)}"
+                    -fsh_add_highlights "$val" "${#__fshtb_model}"
+                    val="$REPLY"
+
+                    __fshtb_model+="$val"
+                    if (( first )) || [[ -n "$stra" ]]; then
+                        (( idx == __fsh_y )) && __cur_line+="$val"
+                    else
+                        (( idx == __fsh_y )) && __cur_line+=$'\0'"$val"
+                    fi
                     first=0
+
+                    # Strb
+                    if [[ -n "$strb" ]]; then
+                        [[ -n "$strbcol" ]] && COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#strb} )) fg=$strbcol" )
+                        __fshtb_model+="$strb"
+                        (( idx == __fsh_y )) && __cur_line+="$strb"
+                    fi
+
+                    __fshtb_model+="$tmp"
+                    (( idx == __fsh_y )) && __cur_line+="${tmp:+$nul$tmp}"
+
                     content_added=1
                 done
-            elif [[ "$tbit" = (#b)"%optdesc["([^\],]#)","([^\]]#)\](\<([^\>]#)\>)(#c0,1)\[([^\]]#)\](\{([^\}]#)\})(#c0,1) ]]; then
-                idx_from="${match[1]}" idx_to="${match[2]}" isepar="${match[4]:-:}" separ="${match[5]}" code="${match[7]}"
-                tmp=$'\0'"$separ"
+            elif [[ "$tbit" = (#b)"%optdesc["([^\],]#)","([^\]]#)\](\<([^\>]#)\>)(#c0,1)\[([^\]]#)\](#B)(\((#b)([^\),]#)","(#c0,1)([^\)]#)\))(#c0,1)(#B)(\{(#b)([^\}]#)\})(#c0,1) ]]; then
+                idx_from="${match[1]}" idx_to="${match[2]}" isepar="${match[4]:-:}" separ="${match[5]}" stra="${match[6]}" strb="${match[7]}" code="${match[8]}"
+
+                [[ "$stra" = (#b)(*)/(*) ]] && stra="${match[1]}" stracol="${match[2]}"
+                [[ "$strb" = (#b)(*)/(*) ]] && strb="${match[1]}" strbcol="${match[2]}"
+
+                tmp="$separ"
+                # Used by -fsh_add_highlights
+                styles=( star-quoted double-quoted )
+                needles=( "*" "\"" )
+
                 for (( idx2 = idx_from; idx2 <= idx_to && idx2 <= LAST; ++ idx2 )); do
                     (( idx2 == idx_to || idx2 == LAST )) && tmp=""
+
+                    # stra
+                    if [[ -n "$stra" ]]; then
+                        [[ -n "$stracol" ]] && COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#stra} )) fg=$stracol" )
+                        __fshtb_model+="$stra"
+                        if (( first )); then
+                            (( idx == __fsh_y )) && __cur_line+="$stra"
+                        else
+                            (( idx == __fsh_y )) && __cur_line+=$'\0'"$stra"
+                        fi
+                        first=0
+                    fi
+
                     ent=${entries[idx2]}
                     key="${${ent#<[^>]##>_}/_/ }"
-                    (( first )) && __fshtb_model+="$key$isepar${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp || \
-                                    __fshtb_model+=$'\0'"$key$isepar${hsh[$ent]#[A-Z][0-9](#c1,2)}"$tmp
+                    val="${hsh[$ent]#[A-Z][0-9](#c1,2)}"
+                    -fsh_add_highlights "$val" "$(( ${#key} + ${#isepar} + ${#__fshtb_model} ))"
+                    val="$REPLY"
+
+                    __fshtb_model+="$key$isepar$val"
+                    if (( first )); then
+                        (( idx == __fsh_y )) && __cur_line+="$key$nul$isepar$nul$val"
+                    else
+                        (( idx == __fsh_y )) && __cur_line+=$'\0'"$key$nul$isepar$nul$val"
+                    fi
                     first=0
+
+                    # Strb
+                    if [[ -n "$strb" ]]; then
+                        [[ -n "$strbcol" ]] && COLORS+=( "$(( offset + ${#__fshtb_model} )) $(( offset + ${#__fshtb_model} + ${#strb} )) fg=$strbcol" )
+                        print "Added color at: |$__fshtb_model|" >> /tmp/reply
+                        __fshtb_model+="$strb"
+                        (( idx == __fsh_y )) && __cur_line+="$strb"
+                    fi
+
+                    __fshtb_model+="$tmp"
+                    (( idx == __fsh_y )) && __cur_line+="${tmp:+$nul$tmp}"
+
                     content_added=1
                 done
-            elif [[ "$tbit" = "%item-id" ]]; then
-                (( first )) && __fshtb_model+="[$tidbit]" || __fshtb_model+=$'\0'"[$tidbit]"
+            elif [[ "$tbit" = (#b)"%item-id"(#B)(\((#b)([^/\),]#)/(#c0,1)([^,\)]#)","([^/\)]#)/(#c0,1)([^\)]#)\))(#c0,1) ]]; then
+                stra="${match[1]}" stracol="${match[2]}" strb="${match[3]}" strbcol="${match[4]}"
+                __fshtb_model+="${stra}$tidbit${strb}"
+                if (( first )); then
+                    (( idx == __fsh_y )) && __cur_line+="${stra}$tidbit${strb}"
+                else
+                    (( idx == __fsh_y )) && __cur_line+=$'\0'"${stra}$tidbit${strb}"
+                fi
                 first=0
                 content_added=1
             elif [[ "$tbit" = "%END" ]]; then
@@ -139,85 +309,53 @@ function -fsh_tidbits_main {
                 break
             else
                 if (( content_added )); then
-                    [[ "$tbit" = "+"* ]] && __fshtb_model+=$'\0'" ${tbit#+} "
-                    [[ "$tbit" != "+"* ]] && __fshtb_model+=$'\0'"$tbit"
+                    if [[ "$tbit" = (#b)*\{([0-9]#)\} ]]; then
+                        padding="${match[1]}"
+                        tbit=${tbit%\{[0-9]#\}}
+                        if [[ "$__fshtb_model" = (#b)*($'\n'|(#s))(*)(#e) ]]; then
+                            padding=padding-${#match[2]}
+                            (( padding <= 0 )) && padding=0
+                        fi
+                    else
+                        padding=0
+                    fi
+                    (( padding > 0 )) && padding_str="${(l:padding:):-}" || padding_str=""
+                    [[ "$tbit" = "+"* ]] && { __fshtb_model+="$padding_str ${tbit#+} "; (( idx == __fsh_y )) && __cur_line+=$'\0'"$padding_str ${tbit#+} "; }
+                    [[ "$tbit" != "+"* ]] && { __fshtb_model+="$padding_str$tbit"; (( idx == __fsh_y )) && __cur_line+=$'\0'"$padding_str$tbit"; }
                     content_added=0
                 fi
             fi
         done
         __fshtb_model+=$'\n'
+        (( idx == __fsh_y )) && __cur_line+=$'\n'
     done
 
     region_highlight=()
 
-    # Highlight various quotations, wrappings with e.g. *.
-    # It removes some bits of text, so should be run as
-    # first highlighting code.
-    integer zero_count
-    local -a styles needles
-    styles=( single-quoted double-quoted )
-    needles=( "'" "\"" )
-
-    FSH_LIST=()
-    for (( idx=1; idx <= 2; ++ idx )); do
-        : ${__fshtb_model//(#m)${needles[idx]}[^${needles[idx]}]#${needles[idx]}/$(( fsh_sy_h_append_ex(MBEGIN+1-1,MEND-1-1,idx) ))}
-        __fshtb_model="${__fshtb_model//(#b)${needles[idx]}([^${needles[idx]}]#)${needles[idx]}/${match[1]}}"
-    done
-
-    # Remember where \0 occured
-    local -a FSH_LIST2
-    FSH_LIST2=()
-    : ${__fshtb_model//(#m)$'\0'/$(( fsh_sy_h_append_ex2(MBEGIN,MEND,0) ))}
-
-    idx=0
-    for ent in "${(on)FSH_LIST[@]}"; do
-        zero_count=0
-        for meta in "${(on)FSH_LIST2[@]}"; do
-            (( ${${(s: :)ent}[1]} - idx > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
-        done
-        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - idx - zero_count )) $(( offset + ${${(s: :)ent}[2]} - idx - zero_count )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
-        idx+=2
-    done
-
     # Highlight combo and option identifiers
     styles=( combo-id opt-id )
-    needles=( "\[[^#][^\]]##\]" "\[[#][^\]]##\]" )
+    needles=( "\[[^#][^\]]##\]##" "\[[#][^\]]##\]##" )
 
     FSH_LIST=()
     for (( idx=1; idx <= 2; ++ idx )); do
-        : ${__fshtb_model//(#m)${~needles[idx]}/$(( fsh_sy_h_append_ex(MBEGIN,MEND,idx) ))}
+        : ${__fshtb_model//(#m)${~needles[idx]}/$(( fsh_sy_h_append_ex3(MBEGIN,MEND,idx) ))}
     done
+    region_highlight+=( "${FSH_LIST[@]}" )
 
-    for ent in "${(on)FSH_LIST[@]}"; do
-        zero_count=0
-        for meta in "${(on)FSH_LIST2[@]}"; do
-            (( ${${(s: :)ent}[1]} > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
-        done
-        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - zero_count )) $(( offset + ${${(s: :)ent}[2]} - zero_count )) ${out[<style>_${styles[${${(s: :)ent}[3]}]}]}" )
-    done
+    # Highlights aggregated in generation code
+    region_highlight+=( "${COLORS[@]}" )
 
-    # Options highlight
-    FSH_LIST=()
-    : ${__fshtb_model//(#m)[$'\0\n']-[^$isepar]##$isepar/$(( fsh_sy_h_append_ex(MBEGIN+1,MEND-1,0) ))}
-    for ent in "${(on)FSH_LIST[@]}"; do
-        zero_count=0
-        for meta in "${(on)FSH_LIST2[@]}"; do
-            (( ${${(s: :)ent}[1]} > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
-        done
-        region_highlight+=( "$(( offset + ${${(s: :)ent}[1]} - zero_count )) $(( offset + ${${(s: :)ent}[2]} - zero_count )) ${out[<style>_option-string]}" )
-    done
-
-    POSTDISPLAY="${__fshtb_model//[$'\0']/}"
+    POSTDISPLAY="${__fshtb_model}"
 
     __fshtb_model="${__fshtb_model#$'\n'}"
 
     # Cursor
     local -a lines columns
-    lines=( "${(@f)__fshtb_model}" )
+    lines=( "${(f)__fshtb_model[@]}" )
     integer ysize=${#lines} xsize
     (( __fsh_y > ysize )) && __fsh_y=ysize
     (( __fsh_y <= 0 )) && __fsh_y=1
-    columns=( "${(0@)lines[__fsh_y]}" )
+    columns=( "${(0)__cur_line[@]}" )
     xsize=${#columns}
     (( __fsh_x > xsize )) && __fsh_x=xsize
     (( __fsh_x <= 0 )) && __fsh_x=1
@@ -229,34 +367,24 @@ function -fsh_tidbits_main {
     done
     offset3=offset2
     for (( idx = 1; idx < __fsh_x; ++ idx )); do
-        offset2+=${#columns[idx]}+1
+        offset2+=${#columns[idx]}
     done
     if (( last_direction == 1 && __fsh_x < xsize )); then
         if [[ "${columns[idx]}" != *[a-zA-Z0-9]* ]]; then
             __fsh_x+=1
-            offset2+=${#columns[idx]}+1
+            offset2+=${#columns[idx]}
             idx+=1
         fi
     elif (( last_direction == -1 && __fsh_x > 1 )); then
         if [[ "${columns[idx]}" != *[a-zA-Z0-9]* ]]; then
             __fsh_x=__fsh_x-1
-            offset2=offset2-${#columns[idx-1]}-1
+            offset2=offset2-${#columns[idx-1]}
             idx=idx-1
         fi
     fi
 
-    zero_count=0
-    integer zero_count2=0 zero_count3=0 zero_count4=0
-
-    for meta in "${(on)FSH_LIST2[@]}"; do
-        (( offset3 > ${${(s: :)meta}[1]} - 1 )) && zero_count+=1
-        (( offset3 + ${#lines[__fsh_y]} + 1 > ${${(s: :)meta}[1]} - 1 )) && zero_count2+=1
-        (( offset2 > ${${(s: :)meta}[1]} - 1 )) && zero_count3+=1
-        (( offset2 + ${#columns[idx]} + 1 > ${${(s: :)meta}[1]} - 1 )) && zero_count4+=1
-    done
-    [[ "${lines[__fsh_y]}" != \[\#* ]] && region_highlight+=( "$(( offset + offset3 - zero_count )) $(( offset + offset3 + ${#lines[__fsh_y]} + 1 - zero_count2 )) ${out[<style>_cursorwide]}" )
-
-    region_highlight+=( "$(( offset + offset2 - zero_count3 )) $(( offset + offset2 + ${#columns[idx]} + 2 - zero_count4 )) ${out[<style>_cursor]}" )
+    region_highlight+=( "$(( offset + offset3 )) $(( offset + offset3 + ${#lines[__fsh_y]} + 1 )) ${out[<style>_cursorwide]}" )
+    region_highlight+=( "$(( offset + offset2 )) $(( offset + offset2 + ${#columns[idx]} + 1 )) ${out[<style>_cursor]}" )
 }
 
 -fsh_tidbits_main
