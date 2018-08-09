@@ -1,6 +1,6 @@
 # vim:ft=zsh:et:sw=4
 (( next_word = 2 | 8192 ))
-__first_call="$1" __wrd="$2" __start_pos="$3" __end_pos="$4"
+local out check __first_call="$1" __wrd="$2" __start_pos="$3" __end_pos="$4"
 typeset -gA FAST_WHATIS_CACHE
 
 if (( __first_call )) && [[ -z "${FAST_HIGHLIGHT[whatis_chroma_type]}" ]] ;then
