@@ -11,7 +11,7 @@ if (( __first_call )) && [[ -z "${FAST_HIGHLIGHT[whatis_chroma_type]}" ]] ;then
 
     out=$(whatis "osx whatis fallback ckeck")
     if [[ $? == 0 ]]; then
-        if [[ "$out" != *nothing\ appropriate* ]]; then
+        if [[ "$out" = *nothing\ appropriate* ]]; then
             FAST_HIGHLIGHT[whatis_chroma_type]=2
         else
             FAST_HIGHLIGHT[whatis_chroma_type]=0
@@ -30,7 +30,7 @@ else
     if [[ -z "${FAST_WHATIS_CACHE[$__wrd]}" ]]; then
         if (( FAST_HIGHLIGHT[whatis_chroma_type] == 2 )); then
             out=$(whatis "$__wrd")
-            [[ "$out" != *nothing\ appropriate* ]] && check=0 || check=1
+            [[ "$out" = *nothing\ appropriate* ]] && check=1 || check=0
         else
             whatis "$__wrd" > /dev/null && check=1 || check=0
         fi
