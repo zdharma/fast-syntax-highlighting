@@ -118,6 +118,8 @@ __FAST_HIGHLIGHT_TOKEN_TYPES=(
 
   # Precommand
 
+  '-'           1
+  'nice'        1
   'builtin'     1
   'command'     1
   'exec'        1
