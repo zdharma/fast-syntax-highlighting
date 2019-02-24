@@ -1,0 +1,63 @@
+# -*- mode: sh; sh-indentation: 2; indent-tabs-mode: nil; sh-basic-offset: 2; -*-
+# -------------------------------------------------------------------------------------------------
+# Copyright (c) 2019 Philippe Troin (F-i-f on GitHub)
+# All rights reserved.
+#
+# The only licensing for this file follows.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted
+# provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright notice, this list of conditions
+#    and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright notice, this list of
+#    conditions and the following disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of the zsh-syntax-highlighting contributors nor the names of its contributors
+#    may be used to endorse or promote products derived from this software without specific prior
+#    written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+# FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+# OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# -------------------------------------------------------------------------------------------------
+
+function -fast-collapse-colors {
+  emulate -LR zsh -o warncreateglobal -o typesetsilent
+
+  local -a regelts
+  local region eregion i start end st_fg st_bg st_other
+  for region in $@
+  do
+    regelts=(${(s: :)region})
+    start=$regelts[1]
+    end=$regelts[2]
+    st_fg=
+    st_bg=
+    st_other=
+    for eregion in $reply[@] $region
+    do
+      regelts=(${(s: :)eregion})
+      if (( regelts[1] <= start && $regelts[2] >= end ))
+      then
+	for i in ${(ps:,:)regelts[3]}; do
+	  case $i in
+	    (fg=*) st_fg=$i ;;
+	    (bg=*) st_bg=$i ;;
+	    (*)    if [[ $i != none ]]; then st_other=${st_other:+$st_other,}$i; fi ;;
+	  esac
+	done
+      fi
+    done
+    local style=$st_fg
+    style+=${st_bg:+${style:+,}$st_bg}
+    style+=${st_other:+${style:+,}$st_other}
+    if [[ -z $style ]]; then style=none; fi
+    reply+=("$start $end $style")
+  done
+}
