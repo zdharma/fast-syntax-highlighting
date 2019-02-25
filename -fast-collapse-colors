@@ -28,7 +28,8 @@
 # -------------------------------------------------------------------------------------------------
 
 function -fast-collapse-colors {
-  emulate -LR zsh -o warncreateglobal -o typesetsilent
+  emulate -LR zsh
+  setopt warncreateglobal typesetsilent
 
   local -a regelts
   local region eregion i start end st_fg st_bg st_other
