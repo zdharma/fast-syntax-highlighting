@@ -127,10 +127,8 @@ local -a match mbegin mend completions_user completions_host
                     __style=${FAST_THEME_NAME}incorrect-subtle
                 fi
 
-            elif [[ "${FAST_HIGHLIGHT[chroma-ssh-counter]}" -eq 2 ]]; then
-                this_word=1
-                next_word=2
-                return 1
+                (( next_word = 1 ))
+
             fi
         fi
     fi
