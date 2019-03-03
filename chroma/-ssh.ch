@@ -97,7 +97,7 @@ local -a match mbegin mend completions_user completions_host
                     possible_host=$match[4]
                     (( host_start_offset = mbegin[4] - mbegin[1], host_end_offset = 0 ))
 
-                    if (( check_port )) && [[ $possible_host = (#b)(*)(:[0-9]#) ]]; then
+                    if (( check_port )) && [[ $possible_host = (#b)(*)(:[0-9]##) ]]; then
                         (( __start=__start_pos-${#PREBUFFER}+(host_start_offset+mbegin[2]-mbegin[1]), __end=__end_pos-host_end_offset-${#PREBUFFER}, __start >= 0,
                            host_end_offset+=mend[2]-mend[1] )) \
                             && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}incorrect-subtle]}") \
