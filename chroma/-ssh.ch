@@ -87,7 +87,7 @@ local -a match mbegin mend completions_user completions_host
                             host_style=${FAST_THEME_NAME}mathnum
                             check_port=1
                             ;;
-                        (::[0-9a-fA-F:]#[0-9a-fA-F]|[0-9a-fA-F][0-9a-fA-F:]#::|[0-9a-fA-F][0-9a-fA-F:]#:[0-9a-fA-F:]#[0-9a-fA-F])
+                        (([0-9a-fA-F][0-9a-fA-F:]#|)::([0-9a-fA-F:]#[0-9a-fA-F]|)|[0-9a-fA-F]##:[0-9a-fA-F:]#[0-9a-fA-F])
                             host_style=${FAST_THEME_NAME}mathnum
                             ;;
                         (*)
