@@ -170,6 +170,7 @@ FAST_HIGHLIGHT+=(
   chroma-autorandr     chroma/-autorandr.ch
   chroma-docker        chroma/-docker.ch
   chroma-example       chroma/-example.ch
+  chroma-ionice        chroma/-ionice.ch
   chroma-make          chroma/-make.ch
   chroma-nice          chroma/-nice.ch
   chroma-nmcli         chroma/-nmcli.ch
@@ -207,6 +208,7 @@ FAST_HIGHLIGHT+=(
   chroma-whatis        chroma/-whatis.ch
   chroma-man           chroma/-whatis.ch
 
+  chroma--             chroma/-precommand.ch
   chroma-xargs         chroma/-precommand.ch
   chroma-nohup         chroma/-precommand.ch
 
@@ -245,6 +247,7 @@ FAST_HIGHLIGHT+=(
   chroma-subliminal    chroma/-subcommand.ch
   chroma-svnadmin      chroma/-subcommand.ch
   chroma-travis        chroma/-subcommand.ch
+  chroma-udisksctl     chroma/-subcommand.ch
   chroma-xdotool       chroma/-subcommand.ch
   chroma-zmanage       chroma/-subcommand.ch
   chroma-zsystem       chroma/-subcommand.ch
@@ -548,10 +551,15 @@ typeset -ga ZLAST_COMMANDS
       fi
    fi
 
+   (( this_word & 8192 )) && {
+     __list=( ${(z@)${aliases[$active_command]:-${active_command##*/}}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#} )
+     ${FAST_HIGHLIGHT[chroma-${__list[1]}]} 0 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
+   }
+
    (( this_word & 1 )) && {
      # !in_redirection needed particularly for exec {A}>b {C}>d
      (( !in_redirection )) && active_command=$__arg
-     _mybuf=${${aliases[$active_command]:-$active_command}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#}
+     _mybuf=${${aliases[$active_command]:-${active_command##*/}}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#}
      [[ "$_mybuf" = (#b)(FPATH+(#c0,1)=)* ]] && _mybuf="${match[1]} ${(j: :)${(s,:,)${_mybuf#FPATH+(#c0,1)=}}}"
      [[ -n ${FAST_HIGHLIGHT[chroma-${_mybuf%% *}]} ]] && {
        __list=( ${(z@)_mybuf} )
@@ -577,11 +585,6 @@ typeset -ga ZLAST_COMMANDS
          ${FAST_HIGHLIGHT[chroma-$active_command]} 1 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
        fi
      } || (( 1 ))
-   } || {
-     (( this_word & 8192 )) && {
-       __list=( ${(z@)${aliases[$active_command]:-$active_command}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#} )
-       ${FAST_HIGHLIGHT[chroma-${__list[1]}]} 0 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
-     }
    }
 
    expanded_path=""
@@ -1160,7 +1163,7 @@ typeset -ga ZLAST_COMMANDS
       __idx=0
     fi
     for _mybuf in $__inputs; do
-      (( __start=${_mybuf%%;*}-__PBUFLEN, __end=${_mybuf##*;}-__PBUFLEN, __start >= 0 )) && \
+      (( __start=${_mybuf%%;*}-__PBUFLEN-1, __end=${_mybuf##*;}-__PBUFLEN, __start >= 0 )) && \
         reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${__tmp}recursive-base]}")
       # Pass authentic buffer for recursive analysis
       -fast-highlight-process "$PREBUFFER" "${__buf[${_mybuf%%;*},${_mybuf##*;}]}" $(( ${_mybuf%%;*} - 1 ))
