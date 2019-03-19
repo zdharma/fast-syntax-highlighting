@@ -164,98 +164,104 @@ typeset -gA FAST_HIGHLIGHT
 : ${FAST_HIGHLIGHT[use_brackets]:=1}
 
 FAST_HIGHLIGHT+=(
-  chroma-fast-theme chroma/-fast-theme.ch
-  chroma-alias      chroma/-alias.ch
-  chroma-autoload   chroma/-autoload.ch
-  chroma-autorandr  chroma/-autorandr.ch
-  chroma-docker     chroma/-docker.ch
-  chroma-example    chroma/-example.ch
-  chroma-make       chroma/-make.ch
-  chroma-nmcli      chroma/-nmcli.ch
-  chroma-node       chroma/-node.ch
-  chroma-perl       chroma/-perl.ch
-  chroma-printf     chroma/-printf.ch
-  chroma-ruby       chroma/-ruby.ch
-  chroma-scp        chroma/-scp.ch
-  chroma-ssh        chroma/-ssh.ch
+  chroma-fast-theme    chroma/-fast-theme.ch
+  chroma-alias         chroma/-alias.ch
+  chroma-autoload      chroma/-autoload.ch
+  chroma-autorandr     chroma/-autorandr.ch
+  chroma-docker        chroma/-docker.ch
+  chroma-example       chroma/-example.ch
+  chroma-ionice        chroma/-ionice.ch
+  chroma-make          chroma/-make.ch
+  chroma-nmcli         chroma/-nmcli.ch
+  chroma-node          chroma/-node.ch
+  chroma-perl          chroma/-perl.ch
+  chroma-printf        chroma/-printf.ch
+  chroma-ruby          chroma/-ruby.ch
+  chroma-scp           chroma/-scp.ch
+  chroma-ssh           chroma/-ssh.ch
 
-  chroma-git        chroma/-git.ch
-  chroma-hub        chroma/-hub.ch
-  chroma-lab        chroma/-lab.ch
+  chroma-git           chroma/-git.ch
+  chroma-hub           chroma/-hub.ch
+  chroma-lab           chroma/-lab.ch
+  chroma-svn           chroma/-subversion.ch
+  chroma-svnadmin      chroma/-subversion.ch
+  chroma-svndumpfilter chroma/-subversion.ch
 
-  chroma-egrep      chroma/-grep.ch
-  chroma-fgrep      chroma/-grep.ch
-  chroma-grep       chroma/-grep.ch
+  chroma-egrep         chroma/-grep.ch
+  chroma-fgrep         chroma/-grep.ch
+  chroma-grep          chroma/-grep.ch
 
-  chroma-awk        chroma/-awk.ch
-  chroma-gawk       chroma/-awk.ch
-  chroma-mawk       chroma/-awk.ch
+  chroma-awk           chroma/-awk.ch
+  chroma-gawk          chroma/-awk.ch
+  chroma-mawk          chroma/-awk.ch
 
-  chroma-source     chroma/-source.ch
-  chroma-.          chroma/-source.ch
+  chroma-source        chroma/-source.ch
+  chroma-.             chroma/-source.ch
 
-  chroma-bash       chroma/-sh.ch
-  chroma-fish       chroma/-sh.ch
-  chroma-sh         chroma/-sh.ch
-  chroma-zsh        chroma/-sh.ch
+  chroma-bash          chroma/-sh.ch
+  chroma-fish          chroma/-sh.ch
+  chroma-sh            chroma/-sh.ch
+  chroma-zsh           chroma/-sh.ch
 
-  chroma-whatis     chroma/-whatis.ch
-  chroma-man        chroma/-whatis.ch
+  chroma-whatis        chroma/-whatis.ch
+  chroma-man           chroma/-whatis.ch
 
-  chroma-xargs      chroma/-precommand.ch
-  chroma-nohup      chroma/-precommand.ch
+  chroma--             chroma/-precommand.ch
+  chroma-xargs         chroma/-precommand.ch
+  chroma-nohup         chroma/-precommand.ch
 
-  chroma-hg         chroma/-subcommand.ch
-  chroma-cvs        chroma/-subcommand.ch
-  chroma-pip        chroma/-subcommand.ch
-  chroma-pip2       chroma/-subcommand.ch
-  chroma-pip3       chroma/-subcommand.ch
-  chroma-gem        chroma/-subcommand.ch
-  chroma-bundle     chroma/-subcommand.ch
-  chroma-yard       chroma/-subcommand.ch
-  chroma-cabal      chroma/-subcommand.ch
-  chroma-npm        chroma/-subcommand.ch
-  chroma-nvm        chroma/-subcommand.ch
-  chroma-yarn       chroma/-subcommand.ch
-  chroma-brew       chroma/-subcommand.ch
-  chroma-port       chroma/-subcommand.ch
-  chroma-yum        chroma/-subcommand.ch
-  chroma-dnf        chroma/-subcommand.ch
-  chroma-tmux       chroma/-subcommand.ch
-  chroma-pass       chroma/-subcommand.ch
-  chroma-aws        chroma/-subcommand.ch
-  chroma-apt        chroma/-subcommand.ch
-  chroma-apt-get    chroma/-subcommand.ch
-  chroma-apt-cache  chroma/-subcommand.ch
-  chroma-aptitude   chroma/-subcommand.ch
-  chroma-keyctl     chroma/-subcommand.ch
-  chroma-systemctl  chroma/-subcommand.ch
-  chroma-asciinema  chroma/-subcommand.ch
-  chroma-ipfs       chroma/-subcommand.ch
-  chroma-zplugin    chroma/-subcommand.ch
-  chroma-aspell     chroma/-subcommand.ch
-  chroma-bspc       chroma/-subcommand.ch
-  chroma-cryptsetup chroma/-subcommand.ch
-  chroma-diskutil   chroma/-subcommand.ch
-  chroma-exercism   chroma/-subcommand.ch
-  chroma-gulp       chroma/-subcommand.ch
-  chroma-i3-msg     chroma/-subcommand.ch
-  chroma-openssl    chroma/-subcommand.ch
-  chroma-solargraph chroma/-subcommand.ch
-  chroma-subliminal chroma/-subcommand.ch
-  chroma-svnadmin   chroma/-subcommand.ch
-  chroma-travis     chroma/-subcommand.ch
-  chroma-xdotool    chroma/-subcommand.ch
-  chroma-zmanage    chroma/-subcommand.ch
-  chroma-zsystem    chroma/-subcommand.ch
-  chroma-zypper     chroma/-subcommand.ch
+  chroma-hg            chroma/-subcommand.ch
+  chroma-cvs           chroma/-subcommand.ch
+  chroma-pip           chroma/-subcommand.ch
+  chroma-pip2          chroma/-subcommand.ch
+  chroma-pip3          chroma/-subcommand.ch
+  chroma-gem           chroma/-subcommand.ch
+  chroma-bundle        chroma/-subcommand.ch
+  chroma-yard          chroma/-subcommand.ch
+  chroma-cabal         chroma/-subcommand.ch
+  chroma-npm           chroma/-subcommand.ch
+  chroma-nvm           chroma/-subcommand.ch
+  chroma-yarn          chroma/-subcommand.ch
+  chroma-brew          chroma/-subcommand.ch
+  chroma-port          chroma/-subcommand.ch
+  chroma-yum           chroma/-subcommand.ch
+  chroma-dnf           chroma/-subcommand.ch
+  chroma-tmux          chroma/-subcommand.ch
+  chroma-pass          chroma/-subcommand.ch
+  chroma-aws           chroma/-subcommand.ch
+  chroma-apt           chroma/-subcommand.ch
+  chroma-apt-get       chroma/-subcommand.ch
+  chroma-apt-cache     chroma/-subcommand.ch
+  chroma-aptitude      chroma/-subcommand.ch
+  chroma-keyctl        chroma/-subcommand.ch
+  chroma-systemctl     chroma/-subcommand.ch
+  chroma-asciinema     chroma/-subcommand.ch
+  chroma-ipfs          chroma/-subcommand.ch
+  chroma-zplugin       chroma/-subcommand.ch
+  chroma-aspell        chroma/-subcommand.ch
+  chroma-bspc          chroma/-subcommand.ch
+  chroma-cryptsetup    chroma/-subcommand.ch
+  chroma-diskutil      chroma/-subcommand.ch
+  chroma-exercism      chroma/-subcommand.ch
+  chroma-gulp          chroma/-subcommand.ch
+  chroma-i3-msg        chroma/-subcommand.ch
+  chroma-openssl       chroma/-subcommand.ch
+  chroma-solargraph    chroma/-subcommand.ch
+  chroma-subliminal    chroma/-subcommand.ch
+  chroma-svnadmin      chroma/-subcommand.ch
+  chroma-travis        chroma/-subcommand.ch
+  chroma-udisksctl     chroma/-subcommand.ch
+  chroma-xdotool       chroma/-subcommand.ch
+  chroma-zmanage       chroma/-subcommand.ch
+  chroma-zsystem       chroma/-subcommand.ch
+  chroma-zypper        chroma/-subcommand.ch
 
-  chroma-fpath+=\( chroma/-fpath_peq.ch
-  chroma-fpath=\( chroma/-fpath_peq.ch
-  chroma-FPATH+=   chroma/-fpath_peq.ch
-  chroma-FPATH=   chroma/-fpath_peq.ch
-  #chroma-which   chroma/-which.ch
-  #chroma-vim     chroma/-vim.ch
+  chroma-fpath+=\(     chroma/-fpath_peq.ch
+  chroma-fpath=\(      chroma/-fpath_peq.ch
+  chroma-FPATH+=       chroma/-fpath_peq.ch
+  chroma-FPATH=        chroma/-fpath_peq.ch
+  #chroma-which        chroma/-which.ch
+  #chroma-vim          chroma/-vim.ch
 )
 
 # Assignments seen, to know if math parameter exists
@@ -548,10 +554,15 @@ typeset -ga ZLAST_COMMANDS
       fi
    fi
 
+   (( this_word & 8192 )) && {
+     __list=( ${(z@)${aliases[$active_command]:-${active_command##*/}}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#} )
+     ${FAST_HIGHLIGHT[chroma-${__list[1]}]} 0 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
+   }
+
    (( this_word & 1 )) && {
      # !in_redirection needed particularly for exec {A}>b {C}>d
      (( !in_redirection )) && active_command=$__arg
-     _mybuf=${${aliases[$active_command]:-$active_command}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#}
+     _mybuf=${${aliases[$active_command]:-${active_command##*/}}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#}
      [[ "$_mybuf" = (#b)(FPATH+(#c0,1)=)* ]] && _mybuf="${match[1]} ${(j: :)${(s,:,)${_mybuf#FPATH+(#c0,1)=}}}"
      [[ -n ${FAST_HIGHLIGHT[chroma-${_mybuf%% *}]} ]] && {
        __list=( ${(z@)_mybuf} )
@@ -577,11 +588,6 @@ typeset -ga ZLAST_COMMANDS
          ${FAST_HIGHLIGHT[chroma-$active_command]} 1 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
        fi
      } || (( 1 ))
-   } || {
-     (( this_word & 8192 )) && {
-       __list=( ${(z@)${aliases[$active_command]:-$active_command}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#} )
-       ${FAST_HIGHLIGHT[chroma-${__list[1]}]} 0 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
-     }
    }
 
    expanded_path=""
@@ -1160,7 +1166,7 @@ typeset -ga ZLAST_COMMANDS
       __idx=0
     fi
     for _mybuf in $__inputs; do
-      (( __start=${_mybuf%%;*}-__PBUFLEN, __end=${_mybuf##*;}-__PBUFLEN, __start >= 0 )) && \
+      (( __start=${_mybuf%%;*}-__PBUFLEN-1, __end=${_mybuf##*;}-__PBUFLEN, __start >= 0 )) && \
         reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${__tmp}recursive-base]}")
       # Pass authentic buffer for recursive analysis
       -fast-highlight-process "$PREBUFFER" "${__buf[${_mybuf%%;*},${_mybuf##*;}]}" $(( ${_mybuf%%;*} - 1 ))
