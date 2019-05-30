@@ -84,9 +84,24 @@ _zsh_highlight()
   if [[ $WIDGET == zle-line-finish ]] || _zsh_highlight_buffer_modified; then
       -fast-highlight-init
       -fast-highlight-process "$PREBUFFER" "$BUFFER" 0
+      (( FAST_HIGHLIGHT[collapse_colors] )) && {
+           local -a reply_copy
+          reply_copy=($reply[@])
+          reply=()
+          -fast-collapse-colors $reply_copy[@]
+      }
       (( FAST_HIGHLIGHT[use_brackets] )) && {
           _FAST_MAIN_CACHE=( $reply )
+          (( FAST_HIGHLIGHT[collapse_colors] )) && {
+              reply=()
+          }
           -fast-highlight-string-process "$PREBUFFER" "$BUFFER"
+          (( FAST_HIGHLIGHT[collapse_colors] )) && {
+              local -a reply_copy
+              reply_copy=($reply[@])
+              reply=( $_FAST_MAIN_CACHE )
+              -fast-collapse-colors $reply_copy[@]
+          }
       }
       region_highlight=( $reply )
   else
@@ -94,8 +109,18 @@ _zsh_highlight()
       if [[ "$char" = ["{([])}"] || "${FAST_HIGHLIGHT[prev_char]}" = ["{([])}"] ]]; then
           FAST_HIGHLIGHT[prev_char]="$char"
           (( FAST_HIGHLIGHT[use_brackets] )) && {
-              reply=( $_FAST_MAIN_CACHE )
+              (( FAST_HIGHLIGHT[collapse_colors] )) && {
+                  reply=()
+              } || {
+                  reply=( $_FAST_MAIN_CACHE )
+              }
               -fast-highlight-string-process "$PREBUFFER" "$BUFFER"
+              (( FAST_HIGHLIGHT[collapse_colors] )) && {
+                  local -a reply_copy
+                  reply_copy=($reply[@])
+                  reply=( $_FAST_MAIN_CACHE )
+                  -fast-collapse-colors $reply_copy[@]
+              }
               region_highlight=( $reply )
           }
       fi
@@ -308,7 +333,7 @@ zmodload zsh/parameter 2>/dev/null
 zmodload zsh/system 2>/dev/null
 
 autoload -Uz -- is-at-least fast-theme fast-read-ini-file -fast-run-git-command -fast-make-targets \
-                -fast-run-command
+                -fast-run-command -fast-collapse-colors
 autoload -Uz -- chroma/-git.ch chroma/-hub.ch chroma/-lab.ch chroma/-example.ch chroma/-grep.ch chroma/-perl.ch chroma/-make.ch \
                 chroma/-awk.ch chroma/-vim.ch chroma/-source.ch chroma/-sh.ch chroma/-docker.ch \
                 chroma/-autoload.ch chroma/-ssh.ch chroma/-scp.ch chroma/-which.ch chroma/-printf.ch \
