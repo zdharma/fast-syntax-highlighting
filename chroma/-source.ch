@@ -44,7 +44,7 @@ integer __idx1 __idx2
 
         if (( FAST_HIGHLIGHT[chroma-src-counter] == 1 )); then
             command mkdir -p "$__home"
-            command cp -f "${__wrd}" "$__home" 2>/dev/null && {
+            command cp -f "${__wrd/#\~/$HOME}" "$__home" 2>/dev/null && {
                 zcompile "$__home"/"${__wrd:t}" 2>/dev/null 1>&2 && __style=${FAST_THEME_NAME}correct-subtle || __style=${FAST_THEME_NAME}incorrect-subtle
             }
         elif (( FAST_HIGHLIGHT[chroma-src-counter] == 2 )); then
