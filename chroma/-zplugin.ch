@@ -1,5 +1,5 @@
 # -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
-# Copyright (c) 2018 Sebastian Gniazdowski
+# Copyright (c) 2018-2019 Sebastian Gniazdowski
 #
 # Chroma function for command `git'. It colorizes the part of command
 # line that holds `git' invocation.
@@ -59,7 +59,7 @@ fsh__zplugin__chroma__def=(
     ##
     ## {{{
 
-    "subcmd:(load|light|compile|stress|edit|glance|recall|status|cd|changes|delete)"
+    "subcmd:(load|light|compile|stress|edit|glance|recall|status|cd|changes)"
         "LOAD_1_arg // LOAD_2_arg // NO_MATCH_#_opt // NO_MATCH_#_arg"
 
     LOAD_1_arg "NO-OP // ::chroma/-zplugin-verify-plugin"
@@ -69,7 +69,7 @@ fsh__zplugin__chroma__def=(
     ## }}}
 
     ##
-    ## `load'
+    ## `update'
     ##
     ## {{{
 
@@ -100,7 +100,7 @@ fsh__zplugin__chroma__def=(
     ## }}}
 
     ##
-    ## `light'
+    ## `unload|report'
     ##
     ## {{{
 
@@ -113,6 +113,23 @@ fsh__zplugin__chroma__def=(
 
     ## }}}
 
+    ##
+    ## `delete'
+    ##
+    ## {{{
+
+    "subcmd:delete"
+        "DELETE_0_opt // LOAD_1_arg // LOAD_2_arg // NO_MATCH_#_opt // NO_MATCH_#_arg"
+
+    DELETE_0_opt "
+            (--all|--clean)
+                    <<>> NO-OP // ::chroma/main-chroma-std-aopt-action"
+
+    LOAD_1_arg "NO-OP // ::chroma/-zplugin-verify-plugin"
+
+    LOAD_2_arg "NO-OP // ::chroma/-zplugin-verify-plugin"
+
+    ## }}}
 
     ##
     ## `cenable'
@@ -290,16 +307,24 @@ chroma/-zplugin-check-ice-mod() {
         unload blockf pick bpick src as ver silent lucid notify mv cp
         atinit atclone atload atpull nocd run-atpull has cloneonly make
         service trackbinds multisrc compile nocompile nocompletions
-        reset-prompt
+        reset-prompt wrap-track reset
+        # Include all additional ices – after
+        # stripping them from the possible: ''
+        ${(@s.|.)${ZPLG_EXTS[ice-mods]//\'\'/}}
     )
     nval_ices=(
-            blockf silent lucid trackbinds cloneonly nocd run-atpull
-            nocompletions svn
+        blockf silent lucid trackbinds cloneonly nocd run-atpull
+        nocompletions svn
+        # Include only those additional ices,
+        # don't have the '' in their name, i.e.
+        # aren't designed to hold value
+        ${(@)${(@s.|.)ZPLG_EXTS[ice-mods]}:#*\'\'*}
     )
 
     if [[ "$_wrd" = (#b)(${(~j:|:)${ice_order[@]:#(${(~j:|:)nval_ices[@]})}})(*) ]]; then
         reply+=("$(( __start )) $(( __start+${mend[1]} )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}double-hyphen-option]}")
         reply+=("$(( __start+${mbegin[2]} )) $(( __end )) ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}optarg-string]}")
+        -fast-highlight-string
         return 0
     elif [[ "$_wrd" = (#b)(${(~j:|:)nval_ices[@]}) ]]; then
         __style=${FAST_THEME_NAME}single-hyphen-option

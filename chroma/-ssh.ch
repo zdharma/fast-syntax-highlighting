@@ -64,7 +64,6 @@ local -a match mbegin mend completions_user completions_host
                             user_style=
                             () {
                                 # Zstyle clobbers reply for sure
-                                local mbegin mend match reply
                                 zstyle -a ":completion:*:users" users completions_users
                             }
                             (( ! $#completions_users )) && completions_users=(${(k)userdirs})
@@ -79,7 +78,7 @@ local -a match mbegin mend completions_user completions_host
                         }
                     [[ -n $match[3] ]] \
                         && (( __start=__start_pos-${#PREBUFFER}+(mbegin[3]-mbegin[1]), __end=__end_pos-${#PREBUFFER}-(mend[5]-mend[3]), __start >= 0 )) \
-                        && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}for-loop-separator]}")
+                        && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}subtle-separator]}")
 
                     host_style=
                     case $match[4] in

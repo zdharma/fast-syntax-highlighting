@@ -1,7 +1,7 @@
 # -*- mode: sh; sh-indentation: 2; indent-tabs-mode: nil; sh-basic-offset: 2; -*-
 # -------------------------------------------------------------------------------------------------
 # Copyright (c) 2010-2016 zsh-syntax-highlighting contributors
-# Copyright (c) 2016-2018 Sebastian Gniazdowski (modifications)
+# Copyright (c) 2016-2019 Sebastian Gniazdowski (modifications)
 # All rights reserved.
 #
 # The only licensing for this file follows.
@@ -105,6 +105,7 @@ zstyle :plugin:fast-syntax-highlighting theme default
 : ${FAST_HIGHLIGHT_STYLES[double-paren]:=fg=yellow}
 : ${FAST_HIGHLIGHT_STYLES[correct-subtle]:=fg=12}
 : ${FAST_HIGHLIGHT_STYLES[incorrect-subtle]:=fg=red}
+: ${FAST_HIGHLIGHT_STYLES[subtle-separator]:=fg=green}
 : ${FAST_HIGHLIGHT_STYLES[subtle-bg]:=bg=18}
 : ${FAST_HIGHLIGHT_STYLES[secondary]:=}
 fi
@@ -554,7 +555,7 @@ typeset -ga ZLAST_COMMANDS
       elif (( this_word & 64 )); then
         [[ $__arg = -[pvV-]## && $active_command = "command" ]] && (( this_word = (this_word & ~1) | 2, next_word = (next_word | 65) & ~2 ))
         [[ $__arg = -[cla-]## && $active_command = "exec" ]] && (( this_word = (this_word & ~1) | 2, next_word = (next_word | 65) & ~2 ))
-        [[ $__arg = \{[a-zA-Z][a-zA-Z0-9]#\} && $active_command = "exec" ]] && {
+        [[ $__arg = \{[a-zA-Z_][a-zA-Z0-9_]#\} && $active_command = "exec" ]] && {
           # Highlight {descriptor} passed to exec
           (( this_word = (this_word & ~1) | 2, next_word = (next_word | 65) & ~2 ))
           (( __start=_start_pos-__PBUFLEN, __end=_end_pos-__PBUFLEN, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}exec-descriptor]}")
@@ -616,13 +617,11 @@ typeset -ga ZLAST_COMMANDS
      else
        _mybuf=${${(Q)__arg}#\"}
        if (( ${+parameters} )) && \
-         [[ $_mybuf = (#b)\$([a-zA-Z_][a-zA-Z0-9_]#|[0-9]##)(*) || \
-             $_mybuf = (#b)\$\{([a-zA-Z_][a-zA-Z0-9_]#|[0-9]##)\}(*) || \
-             $_mybuf = (#b)(*)(*)\$([a-zA-Z_][a-zA-Z0-9_]#|[0-9]##)(*) ]] && \
-         (( ${+parameters[${match[1]}]} || ${+parameters[${match[3]}]} )); then
-         [[ -n "${match[3]}" ]] && \
-           -fast-highlight-main-type ${match[1]}${match[2]}${(P)match[3]}${match[4]} || \
-           -fast-highlight-main-type ${(P)match[1]}${match[2]}
+          [[ $_mybuf = (#b)(*)(*)\$([a-zA-Z_][a-zA-Z0-9_]#|[0-9]##)(*) || \
+             $_mybuf = (#b)(*)(*)\$\{([a-zA-Z_][a-zA-Z0-9_:-]#|[0-9]##)(*) ]] && \
+         (( ${+parameters[${match[3]%%:-*}]} ))
+       then
+         -fast-highlight-main-type ${match[1]}${match[2]}${(P)match[3]%%:-*}${match[4]#\}}
        elif [[ $braces_stack = T* ]]; then # T - typedef, etc.
          REPLY=none
        else
@@ -680,7 +679,7 @@ typeset -ga ZLAST_COMMANDS
         none)           # Assign?
                         if [[ $__arg == [a-zA-Z_][a-zA-Z0-9_]#(|\[[^\]]#\])(|[^\]]#\])(|[+])=* || $__arg == [0-9]##(|[+])=* || ( $braces_stack = T* && ${__arg_type} != 3 ) ]]; then
                           __style=${FAST_THEME_NAME}assign
-                          [[ $__arg = ?*[=]* ]] && FAST_ASSIGNS_SEEN[${__arg%%=*}]=1
+                          FAST_ASSIGNS_SEEN[${__arg%%=*}]=1
 
                           # Handle array assignment
                           [[ $__arg = (#b)*=(\()*(\))* || $__arg = (#b)*=(\()* ]] && {
@@ -872,7 +871,8 @@ typeset -ga ZLAST_COMMANDS
                    else
                      __idx=0
                    fi
-                   -fast-highlight-process "$PREBUFFER" ${${__arg%[\'\"]}#[\'\"]} $(( _start_pos + 1 ))
+                   (( _start_pos-__PBUFLEN >= 0 )) && \
+                     -fast-highlight-process "$PREBUFFER" "${${__arg%[\'\"]}#[\'\"]}" $(( _start_pos + 1 ))
                    (( __idx )) && FAST_THEME_NAME=$_mybuf
                    already_added=1
                  else
@@ -950,7 +950,8 @@ typeset -ga ZLAST_COMMANDS
                  else
                    __idx=0
                  fi
-                 -fast-highlight-process "$PREBUFFER" ${${__arg%[\`]}#[\`]} $(( _start_pos + 1 ))
+                 (( _start_pos-__PBUFLEN >= 0 )) && \
+                   -fast-highlight-process "$PREBUFFER" "${${__arg%[\`]}#[\`]}" $(( _start_pos + 1 ))
                  (( __idx )) && FAST_THEME_NAME=$_mybuf
                  already_added=1
           ;;
@@ -1225,6 +1226,8 @@ typeset -ga ZLAST_COMMANDS
 
 -fast-highlight-check-path()
 {
+  (( _start_pos-__PBUFLEN >= 0 )) || \
+    { [[ $1 != "noasync" ]] && print -r -- "- $_start_pos $_end_pos"; return 1; }
   [[ $1 != "noasync" ]] && {
     print -r -- ${sysparams[pid]}
     # This is to fill cache
@@ -1269,7 +1272,7 @@ typeset -ga ZLAST_COMMANDS
           val=${FAST_HIGHLIGHT[path-queue]}
           val[idx-1,idx+${#stripped}]=""
           FAST_HIGHLIGHT[path-queue]=$val
-          [[ ${FAST_HIGHLIGHT[cache-path-${(q)val}-${stripped%% *}]%D} = 1 && ${#val} -le 27 ]] && zle .redisplay
+          [[ ${FAST_HIGHLIGHT[cache-path-${(q)val}-${stripped%% *}]%D} = 1 && ${#val} -le 27 ]] && zle -R
         }
       fi
     fi
@@ -1297,6 +1300,7 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
 # $1 - additional style to glue-in to added style
 -fast-highlight-string()
 {
+  (( _start_pos-__PBUFLEN >= 0 )) || return 0
   _mybuf=$__arg
   __idx=_start_pos
 
@@ -1332,6 +1336,7 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
 # Parameters used: _mybuf, __idx, _end_idx, __style
 -fast-highlight-math-string()
 {
+  (( _start_pos-__PBUFLEN >= 0 )) || return 0
   _mybuf=$__arg
   __idx=_start_pos
 
@@ -1343,7 +1348,9 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
 
     [[ ${match[1]} = [0-9]* ]] && __style=${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}mathnum]} || {
       [[ ${match[1]} = [a-zA-Z_]* ]] && {
-        [[ -n ${(P)match[1]} || ${FAST_ASSIGNS_SEEN[${match[1]}]} = 1 ]] && __style=${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}mathvar]} || __style=${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}matherr]}
+        [[ ${+parameters[${match[1]}]} = 1 || ${FAST_ASSIGNS_SEEN[${match[1]}]} = 1 ]] && \
+            __style=${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}mathvar]} || \
+            __style=${FAST_HIGHLIGHT_STYLES[${FAST_THEME_NAME}matherr]}
       } || {
         [[ ${match[1]} = "$"* ]] && {
           match[1]=${match[1]//[\{\}+]/}
@@ -1367,6 +1374,7 @@ zle -N -- fast-highlight-check-path-handler -fast-highlight-check-path-handler
 # Highlight special chars inside dollar-quoted strings
 -fast-highlight-dollar-string()
 {
+  (( _start_pos-__PBUFLEN >= 0 )) || return 0
   local i j k __style
   local AA
   integer c
