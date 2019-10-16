@@ -444,6 +444,7 @@ typeset -ga ZLAST_COMMANDS
     return 0
   }
 
+  print -- "\n\n@#-@#-@#-@#-@#-@#-@#-@# WORKING WITH BUF: $__buf @#-@#-@#-@#-@#-@#-@#-@#" &>>!/tmp/fsh-dbg
   # Processing buffer
   local proc_buf=$__buf needle
   for __arg in ${interactive_comments-${(z)__buf}} \
@@ -561,6 +562,7 @@ typeset -ga ZLAST_COMMANDS
 
    (( this_word & 8192 )) && {
      __list=( ${(z@)${aliases[$active_command]:-${active_command##*/}}##[[:space:]]#(command|builtin|exec|noglob|nocorrect|pkexec)[[:space:]]#} )
+     print -r -- Calling A: ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 0 "$__arg" $_start_pos $_end_pos &>>!/tmp/fsh-dbg
      ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 0 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
    }
 
@@ -575,11 +577,13 @@ typeset -ga ZLAST_COMMANDS
          __style=${FAST_THEME_NAME}alias
          (( __start=_start_pos-__PBUFLEN, __end=_end_pos-__PBUFLEN, __start >= 0 )) && reply+=("$__start $__end ${FAST_HIGHLIGHT_STYLES[$__style]}")
 
+         print -r -- Calling B: ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 1 "${__list[1]}" "-100000" $_end_pos &>>!/tmp/fsh-dbg
          ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 1 "${__list[1]}" "-100000" $_end_pos 2>/dev/null || \
            (( this_word = next_word, next_word = 2 ))
 
          for _mybuf in "${(@)__list[2,-1]}"; do
            (( next_word = next_word | (this_word & (BIT_case_code|8192)) ))
+           print -r -- Calling C: ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 0 "$_mybuf" "-100000" $_end_pos &>>!/tmp/fsh-dbg
            ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 0 "$_mybuf" "-100000" $_end_pos 2>/dev/null || \
              (( this_word = next_word, next_word = 2 ))
          done
@@ -590,6 +594,7 @@ typeset -ga ZLAST_COMMANDS
 
          continue
        else
+         print -r -- Calling D: ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 1 "$__arg" $_start_pos $_end_pos &>>!/tmp/fsh-dbg
          ${${FAST_HIGHLIGHT[chroma-${__list[1]}]}%\%*} ${(M)FAST_HIGHLIGHT[chroma-${__list[1]}]%\%*} 1 "$__arg" $_start_pos $_end_pos 2>/dev/null && continue
        fi
      } || (( 1 ))
