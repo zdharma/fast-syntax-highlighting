@@ -130,7 +130,7 @@ chroma/main-create-OPTION-hash.ch() {
 
         chroma/main-chroma-print -l -- "Processing an ||-part - got <<>>-split: _________" "${${__sp[@]}[@]/(#s)/-\\t}" "_________"
         __e="${__sp[1]}"
-        # __s=( "${(@)${(@s:|:)${${__e#\(}%\)(:add|:del|)}}//(#e)/${${(M)__e##\(*\)(:add|:del)}:+${(M)__e%(:add|:del)}}}" )
+        __s=( "${(@)${(@s:|:)${${__e#\(}%\)(:add|:del|)}}//(#e)/${${(M)__e##\(*\)(:add|:del)}:+${(M)__e%(:add|:del)}}}" )
         __s=()
         [[ ${#__s} -eq 1 && -z "${__s[1]}" ]] && __s=()
         __s=( "${__s[@]//((#s)[[:space:]]##|[[:space:]]##(#e))/}" )
@@ -138,7 +138,7 @@ chroma/main-create-OPTION-hash.ch() {
 
         for __ in $__s; do
             __=${__%\^}
-            [[ "$__" = -*:(add|del) ]] && __var_name="${__the_hash_name}[${__}-directive]" || __var_name="${__the_hash_name}[${__}-opt-action]"
+            #[[ "$__" = -*:(add|del) ]] && __var_name="${__the_hash_name}[${__}-directive]" || __var_name="${__the_hash_name}[${__}-opt-action]"
             chroma/main-chroma-print "${(r:70:: :):-${__var_name}} := >>${__sp[1]}${${${#__sp}:#(0|1)}:+ +}<<"
             : ${(P)__var_name::=${__sp[1]}${${${#__sp}:#(0|1)}:+ +}}
 
