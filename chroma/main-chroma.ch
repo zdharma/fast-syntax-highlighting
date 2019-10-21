@@ -130,15 +130,24 @@ chroma/main-create-OPTION-hash.ch() {
 
         chroma/main-chroma-print -l -- "Processing an ||-part - got <<>>-split: _________" "${${__sp[@]}[@]/(#s)/-\\t}" "_________"
         __e="${__sp[1]}"
-        __s=( "${(@)${(@s:|:)${${__e#\(}%\)(:add|:del|)}}//(#e)/${${(M)__e##\(*\)(:add|:del)}:+${(M)__e%(:add|:del)}}}" )
-        __s=()
+        local __e1=${${__e#\(}%\)(:add|:del|)}
+        local __e2=${(M)__e##\(*\)(:add|:del)}
+        # Split on | with the ( and ) and :add/:del stripped and then append
+        # the :add or :del depending on what's on the input line
+        __s=( "${(@)${(@s:|:)__e1}//(#e)/${__e2:+${(M)__e%(:add|:del)}}}" )
+        print -rl X: $__s >> /tmp/fsh-dbg
         [[ ${#__s} -eq 1 && -z "${__s[1]}" ]] && __s=()
+        print -rl Y >> /tmp/fsh-dbg
         __s=( "${__s[@]//((#s)[[:space:]]##|[[:space:]]##(#e))/}" )
         shift __sp
+        print -rl Z >> /tmp/fsh-dbg
 
         for __ in $__s; do
+            print -rl Z1 >> /tmp/fsh-dbg
             __=${__%\^}
-            #[[ "$__" = -*:(add|del) ]] && __var_name="${__the_hash_name}[${__}-directive]" || __var_name="${__the_hash_name}[${__}-opt-action]"
+            print -rl Z2 >> /tmp/fsh-dbg
+            [[ "$__" = -*:(add|del) ]] && __var_name="${__the_hash_name}[${__}-directive]" || __var_name="${__the_hash_name}[${__}-opt-action]"
+            print -rl Z3 >> /tmp/fsh-dbg
             chroma/main-chroma-print "${(r:70:: :):-${__var_name}} := >>${__sp[1]}${${${#__sp}:#(0|1)}:+ +}<<"
             : ${(P)__var_name::=${__sp[1]}${${${#__sp}:#(0|1)}:+ +}}
 
