@@ -107,7 +107,7 @@ chroma/main-chroma-std-verify-pattern() {
 
 # Creates a hash table for given option set (an *_opt field in the chroma def.)
 chroma/main-create-OPTION-hash.ch() {
-    local __subcmd="$1" __option_set_id="$2" __the_hash_name="$3" __x __e __el __the_hash_name __var_name
+    local __subcmd="$1" __option_set_id="$2" __the_hash_name="$3" __ __e __el __the_hash_name __var_name
     local -a __split __sp __s
 
     chroma/main-chroma-print -rl "======================" "  **## STARTING ##** chroma/main-##CREATE##-option-HASH.ch // subcmd:$__subcmd // option_set_id:$__option_set_id // h-nam:$__the_hash_name"
@@ -136,14 +136,14 @@ chroma/main-create-OPTION-hash.ch() {
         __s=( "${__s[@]//((#s)[[:space:]]##|[[:space:]]##(#e))/}" )
         shift __sp
 
-        for __x in $__s; do
-            __x=${__x%\^}
-            [[ "$__x" = -*:(add|del) ]] && __var_name="${__the_hash_name}[${__x}-directive]" || __var_name="${__the_hash_name}[${__x}-opt-action]"
+        for __ in $__s; do
+            __=${__%\^}
+            [[ "$__" = -*:(add|del) ]] && __var_name="${__the_hash_name}[${__}-directive]" || __var_name="${__the_hash_name}[${__}-opt-action]"
             chroma/main-chroma-print "${(r:70:: :):-${__var_name}} := >>${__sp[1]}${${${#__sp}:#(0|1)}:+ +}<<"
             : ${(P)__var_name::=${__sp[1]}${${${#__sp}:#(0|1)}:+ +}}
 
             if (( ${#__sp} >= 2 )); then
-                __var_name="${__the_hash_name}[${__x}-opt-arg-action]"
+                __var_name="${__the_hash_name}[${__}-opt-arg-action]"
                 chroma/main-chroma-print "${(r:70:: :):-${__var_name}} := >>${__sp[2]}<<}"
                 : ${(P)__var_name::=$__sp[2]}
             fi
@@ -182,7 +182,7 @@ chroma/main-process-token.ch() {
             for __val in ${__splitted[@]:#(${(~j:|:)${(@)=FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-deleted-nodes]}})} ${${(@)=FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-added-nodes]}:#(${(~j:|:)${(@)=FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-deleted-nodes]}})}; do
                 [[ "${__val}" != "${__val%%_([0-9]##|\#)##*}"_${FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-counter-arg]}_opt(\*|\^|) && "${__val}" != "${__val%%_([0-9]##|\#)*}"_"#"_opt(\*|\^|) ]] && { chroma/main-chroma-print "DIDN'T MATCH $__val / arg counter:${FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-counter-arg]}" ;  continue; } || chroma/main-chroma-print "Got candidate: $__val"
                 # Create the hash cache-parameter if needed
-                __the_hash_name="fsh__chroma__${FAST_HIGHLIGHT[chroma-current]//[^a-zA-Z0-9_]/_}__x${__subcmd//[^a-zA-Z0-9_]/_}__x${${__val//(#b)([\#\^\*])/${map[${match[1]}]}}//[^a-zA-Z0-9_]/_}"
+                __the_hash_name="fsh__chroma__${FAST_HIGHLIGHT[chroma-current]//[^a-zA-Z0-9_]/_}__${__subcmd//[^a-zA-Z0-9_]/_}__${${__val//(#b)([\#\^\*])/${map[${match[1]}]}}//[^a-zA-Z0-9_]/_}"
                 [[ "$__val" = *_opt(\*|\^|) && "${(P)+__the_hash_name}" -eq 0 ]] && chroma/main-create-OPTION-hash.ch "$__subcmd" "$__val" "$__the_hash_name" || chroma/main-chroma-print "Not creating, the hash already exists..."
                 # Try dedicated-entry for the option
                 __var_name="${__the_hash_name}[${${${${(M)__wrd#?*=}:+${__wrd%=*}=}:-$__wrd}}-opt-action]"
@@ -252,7 +252,7 @@ chroma/main-process-token.ch() {
             for __val in ${__splitted[@]:#(${(~j:|:)${(@)=FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-deleted-nodes]}})} ${${(@)=FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-added-nodes]}:#(${(~j:|:)${(@)=FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-deleted-nodes]}})}; do
                 [[ "${__val}" != "${__val%%_([0-9]##|\#)*}"_"${FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-counter-arg]}"_arg(\*|\^|) && "${__val}" != "${__val%%_([0-9]##|\#)*}"_"#"_arg(\*|\^|) ]] && { chroma/main-chroma-print "Continuing for $__val / arg counter ${FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-counter-arg]}" ; continue }
                 # Create the hash cache-parameter if needed
-                __the_hash_name="fsh__chroma__${FAST_HIGHLIGHT[chroma-current]//[^a-zA-Z0-9_]/_}__x${__subcmd//[^a-zA-Z0-9_]/_}__x${${__val//\#/H}//[^a-zA-Z0-9_]/_}"
+                __the_hash_name="fsh__chroma__${FAST_HIGHLIGHT[chroma-current]//[^a-zA-Z0-9_]/_}__${__subcmd//[^a-zA-Z0-9_]/_}__${${__val//\#/H}//[^a-zA-Z0-9_]/_}"
                 __action="" __handler=""
                 chroma/main-chroma-print "A hit, chosen __val:$__val!"
                 __ch_def_name="fsh__${__chroma_name}__chroma__def[$__val]"
@@ -275,8 +275,8 @@ chroma/main-process-token.ch() {
 
                 # Check for argument directives (like :add)
                 if (( ${#__split} >= 2 )); then
-                    for __x in "${(@)__split[2,-1]}"; do
-                        __splitted=( "${(@s://:)__x}" )
+                    for __ in "${(@)__split[2,-1]}"; do
+                        __splitted=( "${(@s://:)__}" )
                         if [[ "${__splitted[1]}" = add:* ]]; then
                             FAST_HIGHLIGHT[chroma-${FAST_HIGHLIGHT[chroma-current]}-added-nodes]+="${__splitted[1]#add:} ${(j: :)__splitted[2,-1]} "
                         elif [[ "${__splitted[1]}" = del:* ]]; then
