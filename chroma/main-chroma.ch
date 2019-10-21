@@ -134,7 +134,10 @@ chroma/main-create-OPTION-hash.ch() {
         local __e2=${(M)__e##\(*\)(:add|:del)}
         # Split on | with the ( and ) and :add/:del stripped and then append
         # the :add or :del depending on what's on the input line
-        __s=( "${(@)${(@s:|:)__e1}//(#e)/${__e2:+${(M)__e%(:add|:del)}}}" )
+        __s=()
+        for __ in ${(@s:|:)__e1}; do
+            __s+=( $__${__e2:+${(M)__e%(:add|:del)}} )
+        done
         print -rl X: $__s >> /tmp/fsh-dbg
         [[ ${#__s} -eq 1 && -z "${__s[1]}" ]] && __s=()
         print -rl Y >> /tmp/fsh-dbg
