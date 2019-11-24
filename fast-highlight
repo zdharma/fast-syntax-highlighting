@@ -831,4 +831,4 @@ typeset -ga FSH_LIST
 
 functions -M fsh_sy_h_append 2 2 -fsh_sy_h_shappend
 
-# vim:ft=zsh:sw=2:sts=2
+# vim:ft=zsh:sw=2:sts=2:
