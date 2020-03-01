@@ -7,7 +7,7 @@
 local __first_call="$1" __wrd="$2" __start_pos="$3" __end_pos="$4"
 
 if (( __first_call )); then
-    chroma/-git.ch $*
+    :chroma/-git.ch $*
     return 1
 fi
 [[ "$__arg_type" = 3 ]] && return 2
@@ -56,4 +56,4 @@ if [[ "$__wrd" != -* ]] && (( FAST_HIGHLIGHT[chroma-git-got-subcommand] == 0 ));
     fi
 fi
 
-chroma/-git.ch $*
+:chroma/-git.ch $*
