@@ -46,7 +46,8 @@ Feature rich syntax highlighting for Zsh.
 Clone the Repository.
 
 ```zsh
-git clone https://github.com/zdharma/fast-syntax-highlighting ~/path/to/fsh
+git clone https://github.com/zdharma/fast-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/fast-syntax-highlighting
+
 ```
 
 And add the following to your `zshrc` file.
