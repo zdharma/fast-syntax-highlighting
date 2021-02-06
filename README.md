@@ -95,6 +95,14 @@ your other `zgen load` calls in.
 zgen load zdharma/fast-syntax-highlighting
 ```
 
+### zplug
+
+Add the following to your `.zshrc` file in the same place you're doing
+your other `zplug load` calls in.
+
+```zsh
+zplug "zdharma/fast-syntax-highlighting", as:plugin, defer:2
+```
 
 ### Oh-My-Zsh
 
