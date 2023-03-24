@@ -26,51 +26,46 @@
 # -*- mode: zsh; sh-indentation: 2; indent-tabs-mode: nil; sh-basic-offset: 2; -*-
 # vim: ft=zsh sw=2 ts=2 et
 # -------------------------------------------------------------------------------------------------
-
-
-# Standarized way of handling finding plugin dir,
+#
+# Standardized way of handling finding plugin dir,
 # regardless of functionargzero and posixargzero,
 # and with an option for a plugin manager to alter
 # the plugin directory (i.e. set ZERO parameter)
 #
 # Standardized $0 Handling
-# https://z.digitalclouds.dev/community/zsh_plugin_standard#zero-handling
+# https://wiki.zshell.dev/community/zsh_plugin_standard#zero-handling
 0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
 0="${${(M)0:#/*}:-$PWD/$0}"
 
-typeset -g FAST_HIGHLIGHT_VERSION=1.66
-typeset -g FAST_BASE_DIR="${0:h}"
-typeset -ga _FAST_MAIN_CACHE
-# Holds list of indices pointing at brackets that
-# are complex, i.e. e.g. part of "[[" in [[ ... ]]
-typeset -ga _FAST_COMPLEX_BRACKETS
-
 # Functions Directory
-# https://z.digitalclouds.dev/community/zsh_plugin_standard#funtions-directory
+# https://wiki.zshell.dev/community/zsh_plugin_standard#funtions-directory
 if [[ $PMSPEC != *f* ]]; then
   fpath+=( "${0:h}/functions" )
 fi
 
-# Check if Zsh's cache directory exist.
-if [[ -d $ZSH_CACHE_DIR ]]; then
-  # Use Zsh's default cache directory.
-  typeset -g FAST_WORK_DIR=${FAST_WORK_DIR:-${ZSH_CACHE_DIR}/fsh}
-else
-  # Use common values to set default working directory.
-  typeset -g FAST_WORK_DIR=${FAST_WORK_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/fsh}
-fi
+# Default global variables
+typeset -g FAST_HIGHLIGHT_VERSION=1.67
+typeset -g FAST_BASE_DIR="${0:h}"
+typeset -ga _FAST_MAIN_CACHE
 
+# Holds list of indices pointing at brackets that are complex, i.e. e.g. part of "[[" in [[ ... ]]
+typeset -ga _FAST_COMPLEX_BRACKETS
+
+# Allow user to override the working directory,
+# but default to $XDG_CACHE_HOME/f-sy-h and fall back to $FAST_BASE_DIR.
+typeset -g FAST_WORK_DIR=${FAST_WORK_DIR:-${XDG_CACHE_HOME:-~/.cache}/f-sy-h}
 : ${FAST_WORK_DIR:=$FAST_BASE_DIR}
-# Expand any tilde in the (supposed) path.
 FAST_WORK_DIR=${~FAST_WORK_DIR}
 
 # Create working directory if it doesn't exist.
-[[ -w $FAST_WORK_DIR ]] || command mkdir -p "$FAST_WORK_DIR"
+[[ -w $FAST_WORK_DIR ]] || command mkdir -p "$FAST_WORK_DIR" || {
+  print -u2 "f-sy-h: cannot create working directory $FAST_WORK_DIR"
+  return 1
+}
 
 # Invokes each highlighter that needs updating.
 # This function is supposed to be called whenever the ZLE state changes.
-_zsh_highlight()
-{
+_zsh_highlight() {
   # Store the previous command return code to restore it whatever happens.
   local ret=$?
 
@@ -81,8 +76,8 @@ _zsh_highlight()
     return $ret
   fi
 
-  emulate -LR zsh
-  setopt extendedglob warncreateglobal typesetsilent noshortloops
+  builtin emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
+  builtin setopt extended_glob typeset_silent no_short_loops rc_quotes no_auto_pushd
 
   local REPLY # don't leak $REPLY into global scope
   local -a reply
@@ -141,13 +136,16 @@ _zsh_highlight()
     fi
 
     # yank / paste (zsh-5.1.1 and newer)
-    (( $+YANK_ACTIVE )) && (( YANK_ACTIVE )) && _zsh_highlight_apply_zle_highlight paste standout "$YANK_START" "$YANK_END"
+    (( $+YANK_ACTIVE )) && (( YANK_ACTIVE )) && \
+    _zsh_highlight_apply_zle_highlight paste standout "$YANK_START" "$YANK_END"
 
     # isearch
-    (( $+ISEARCHMATCH_ACTIVE )) && (( ISEARCHMATCH_ACTIVE )) && _zsh_highlight_apply_zle_highlight isearch underline "$ISEARCHMATCH_START" "$ISEARCHMATCH_END"
+    (( $+ISEARCHMATCH_ACTIVE )) && (( ISEARCHMATCH_ACTIVE )) && \
+    _zsh_highlight_apply_zle_highlight isearch underline "$ISEARCHMATCH_START" "$ISEARCHMATCH_END"
 
     # suffix
-    (( $+SUFFIX_ACTIVE )) && (( SUFFIX_ACTIVE )) && _zsh_highlight_apply_zle_highlight suffix bold "$SUFFIX_START" "$SUFFIX_END"
+    (( $+SUFFIX_ACTIVE )) && (( SUFFIX_ACTIVE )) && \
+    _zsh_highlight_apply_zle_highlight suffix bold "$SUFFIX_START" "$SUFFIX_END"
 
     return $ret
 
@@ -202,16 +200,16 @@ _zsh_highlight_apply_zle_highlight() {
 # Whether the command line buffer has been modified or not.
 #
 # Returns 0 if the buffer has changed since _zsh_highlight was last called.
-_zsh_highlight_buffer_modified()
-{
-  [[ "${_ZSH_HIGHLIGHT_PRIOR_BUFFER:-}" != "$BUFFER" ]] || [[ "$REGION_ACTIVE" != "$_ZSH_HIGHLIGHT_PRIOR_RACTIVE" ]] || { _zsh_highlight_cursor_moved && [[ "$REGION_ACTIVE" = 1 || "$REGION_ACTIVE" = 2 ]] }
+_zsh_highlight_buffer_modified() {
+  [[ "${_ZSH_HIGHLIGHT_PRIOR_BUFFER:-}" != "$BUFFER" ]] || \
+  [[ "$REGION_ACTIVE" != "$_ZSH_HIGHLIGHT_PRIOR_RACTIVE" ]] || \
+  { _zsh_highlight_cursor_moved && [[ "$REGION_ACTIVE" = 1 || "$REGION_ACTIVE" = 2 ]] }
 }
 
 # Whether the cursor has moved or not.
 #
 # Returns 0 if the cursor has moved since _zsh_highlight was last called.
-_zsh_highlight_cursor_moved()
-{
+_zsh_highlight_cursor_moved() {
   [[ -n $CURSOR ]] && [[ -n ${_ZSH_HIGHLIGHT_PRIOR_CURSOR-} ]] && (($_ZSH_HIGHLIGHT_PRIOR_CURSOR != $CURSOR))
 }
 
@@ -221,8 +219,7 @@ _zsh_highlight_cursor_moved()
 
 # Helper for _zsh_highlight_bind_widgets
 # $1 is name of widget to call
-_zsh_highlight_call_widget()
-{
+_zsh_highlight_call_widget() {
   integer ret
   builtin zle "$@"
   ret=$?
@@ -231,15 +228,14 @@ _zsh_highlight_call_widget()
 }
 
 # Rebind all ZLE widgets to make them invoke _zsh_highlights.
-_zsh_highlight_bind_widgets()
-{
-  setopt localoptions noksharrays
+_zsh_highlight_bind_widgets() {
+  builtin setopt local_options no_ksh_arrays
   local -F2 SECONDS
   local prefix=orig-s${SECONDS/./}-r$(( RANDOM % 1000 )) # unique each time, in case we're sourced more than once
 
   # Load ZSH module zsh/zleparameter, needed to override user defined widgets.
   zmodload zsh/zleparameter 2>/dev/null || {
-    print -r -- >&2 'zsh-syntax-highlighting: failed loading zsh/zleparameter.'
+    builtin print -r -- >&2 'zsh-syntax-highlighting: failed loading zsh/zleparameter.'
     return 1
   }
 
@@ -290,7 +286,7 @@ _zsh_highlight_bind_widgets()
         zle -N -- $cur_widget _zsh_highlight_widget_$cur_widget
       else
         # Default: unhandled case.
-        print -r -- >&2 "zsh-syntax-highlighting: unhandled ZLE widget ${(qq)cur_widget}"
+        builtin print -r -- >&2 "zsh-syntax-highlighting: unhandled ZLE widget ${(qq)cur_widget}"
       fi
     esac
   done
@@ -302,13 +298,12 @@ _zsh_highlight_bind_widgets()
 
 # Try binding widgets.
 _zsh_highlight_bind_widgets || {
-  print -r -- >&2 'zsh-syntax-highlighting: failed binding ZLE widgets, exiting.'
+  builtin print -r -- >&2 'zsh-syntax-highlighting: failed binding ZLE widgets, exiting.'
   return 1
 }
 
-# Reset scratch variables when commandline is done.
-_zsh_highlight_preexec_hook()
-{
+# Reset scratch variables when command line is done.
+_zsh_highlight_preexec_hook() {
   typeset -g _ZSH_HIGHLIGHT_PRIOR_BUFFER=
   typeset -gi _ZSH_HIGHLIGHT_PRIOR_CURSOR=0
   typeset -ga _FAST_MAIN_CACHE
@@ -317,35 +312,65 @@ _zsh_highlight_preexec_hook()
 
 autoload -Uz add-zsh-hook
 add-zsh-hook preexec _zsh_highlight_preexec_hook 2>/dev/null || {
-  print -r -- >&2 'zsh-syntax-highlighting: failed loading add-zsh-hook.'
+  builtin print -r -- >&2 'zsh-syntax-highlighting: failed loading add-zsh-hook.'
 }
 
-/fshdbg() {
-  print -r -- "$@" >>! /tmp/reply
+/f-sy-h-debug() {
+  builtin print -r -- "$@" >>! /tmp/reply
 }
 
-ZSH_HIGHLIGHT_MAXLENGTH=10000
+typeset -g ZSH_HIGHLIGHT_MAXLENGTH=10000
 
 # Load zsh/parameter module if available
 zmodload zsh/parameter 2>/dev/null
 zmodload zsh/system 2>/dev/null
 
-autoload -Uz -- is-at-least fast-theme \
+autoload -Uz -- is-at-least \
   .fast-read-ini-file .fast-run-git-command \
   .fast-make-targets .fast-run-command .fast-zts-read-all
 
-autoload -Uz -- →chroma/-git.ch →chroma/-hub.ch →chroma/-lab.ch →chroma/-example.ch \
-  →chroma/-grep.ch →chroma/-perl.ch →chroma/-make.ch →chroma/-awk.ch \
-  →chroma/-vim.ch →chroma/-source.ch →chroma/-sh.ch →chroma/-docker.ch \
-  →chroma/-autoload.ch →chroma/-ssh.ch →chroma/-scp.ch →chroma/-which.ch \
-  →chroma/-printf.ch →chroma/-ruby.ch →chroma/-whatis.ch →chroma/-alias.ch \
-  →chroma/-subcommand.ch →chroma/-autorandr.ch →chroma/-nmcli.ch \
-  →chroma/-fast-theme.ch →chroma/-node.ch →chroma/-fpath_peq.ch \
-  →chroma/-precommand.ch →chroma/-subversion.ch →chroma/-ionice.ch \
-  →chroma/-nice.ch →chroma/main-chroma.ch →chroma/-ogit.ch →chroma/-zi.ch
+# Disabled: chroma/-vim.ch chroma/-which.ch
+autoload -Uz -- \
+  chroma/-alias.ch \
+  chroma/-autoload.ch \
+  chroma/-autorandr.ch \
+  chroma/-awk.ch \
+  chroma/-docker.ch \
+  chroma/-fpath_peq.ch \
+  chroma/-git.ch \
+  chroma/-grep.ch \
+  chroma/-hub.ch \
+  chroma/-ionice.ch \
+  chroma/-lab.ch \
+  chroma/-make.ch \
+  chroma/-nice.ch \
+  chroma/-nmcli.ch \
+  chroma/-node.ch \
+  chroma/-ogit.ch \
+  chroma/-perl.ch \
+  chroma/-precommand.ch \
+  chroma/-printf.ch \
+  chroma/-ruby.ch \
+  chroma/-scp.ch \
+  chroma/-sh.ch \
+  chroma/-source.ch \
+  chroma/-ssh.ch \
+  chroma/-subcommand.ch \
+  chroma/-subversion.ch \
+  chroma/-whatis.ch \
+  chroma/-zi.ch \
+  chroma/main-chroma.ch
 
-source "${0:h}/fast-highlight"
-source "${0:h}/fast-string-highlight"
+if (( FAST_THEME_MANAGER_DISABLED )) {
+  unset '_comps[fast-theme]' 2>/dev/null
+  unset -f chroma/-fast-theme.ch 2>/dev/null
+} else {
+  autoload -Uz -- fast-theme chroma/-fast-theme.ch chroma/-example.ch
+  alias f-sy-h=fast-theme
+}
+
+source "${0:h}/functions/fast-highlight"
+source "${0:h}/functions/fast-string-highlight"
 
 local __fsyh_theme
 zstyle -s :plugin:fast-syntax-highlighting theme __fsyh_theme
@@ -367,25 +392,17 @@ zstyle -s :plugin:fast-syntax-highlighting theme __fsyh_theme
 
 unset __fsyh_theme
 
-alias fsh-alias=fast-theme
-
 -fast-highlight-fill-option-variables
+
 if [[ ! -e $FAST_WORK_DIR/secondary_theme.zsh ]] {
+  local theme_link=https://raw.githubusercontent.com/z-shell/F-Sy-H/main/share/free_theme.zsh
   if { type curl &>/dev/null } {
-    curl -fsSL -o "$FAST_WORK_DIR/secondary_theme.zsh" \
-      https://raw.githubusercontent.com/z-shell/F-Sy-H/main/share/free_theme.zsh \
-      &>/dev/null
+  command curl -fsSL -o "$FAST_WORK_DIR/secondary_theme.zsh" $theme_link &>/dev/null
   } elif { type wget &>/dev/null } {
-    wget -O "$FAST_WORK_DIR/secondary_theme.zsh" \
-      https://raw.githubusercontent.com/z-shell/F-Sy-H/main/share/free_theme.zsh \
-      &>/dev/null
+    command wget -O "$FAST_WORK_DIR/secondary_theme.zsh" $theme_link &>/dev/null
   }
   touch "$FAST_WORK_DIR/secondary_theme.zsh"
-}
-
-if [[ $(uname -a) = (#i)*darwin* ]] {
-  typeset -gA FAST_HIGHLIGHT
-  FAST_HIGHLIGHT[chroma-man]=
+  unset theme_link
 }
 
 [[ $COLORTERM == (24bit|truecolor) || ${terminfo[colors]} -eq 16777216 ]] || zmodload zsh/nearcolor &>/dev/null || true

@@ -1,6 +1,6 @@
 #!/usr/bin/env zunit
 @setup {
-    load "../fast-highlight"
+    load "../functions/fast-highlight"
     setopt interactive_comments
     -fast-highlight-fill-option-variables
 }

@@ -4,9 +4,21 @@ name: 🛡️ ZUnit
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "develop"]
+    paths:
+      - "**/*.ch"
+      - "**/*.zsh"
+      - "tests/*"
+      - "share/*"
+      - "themes/*"
+      - "functions/*"
   pull_request_target:
-    branches: ["main", "develop"]
+    paths:
+      - "**/*.ch"
+      - "**/*.zsh"
+      - "tests/*"
+      - "share/*"
+      - "themes/*"
+      - "functions/*"
 
 jobs:
   build-macos:

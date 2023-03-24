@@ -1,11 +1,8 @@
 {
-  "conventionalCommits.scopes": [
-    "maintenance",
-    "workspace",
-    "general",
-    "theme"
-  ],
-  "markdownlint.config": {
-    "extends": ".github/.markdownlint.yaml"
+  "files.associations": {
+    "*za-*": "shellscript",
+    ".ch": "shellscript",
+    "fast-*": "shellscript",
+    ".fast-*": "shellscript"
   }
 }

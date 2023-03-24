@@ -1,33 +1,35 @@
 <h1 align="center"><p>
   <a title="❮ Zi ❯" target="_self" href="https://github.com/z-shell/zi">
-  <img style="width: 60px; height: 60px" src="https://raw.githubusercontent.com/z-shell/zi/main/docs/images/logo.svg" malt="Logo" /></a>
-    ❮ Zi ❯ - F-Sy-H
-</p></h1>
+  <img width="60px" height="60px" src="https://raw.githubusercontent.com/z-shell/zi/main/docs/images/logo.png" alt="Logo" /></a>
+    ❮ Zi ❯ - F-Sy-H</p></h1>
 <h2 align="center">Feature-rich Syntax Highlighting for Zsh</h2>
 <p align="center">
-  <a href="https://github.com/orgs/z-shell/discussions/">《❔》Ask a Question </a>
-  <a href="https://wiki.zshell.dev.dev/search">《💡》Search Wiki </a>
-<a
-  href="https://github.com/z-shell/community/issues/new?assignees=&labels=%F0%9F%91%A5+member&template=membership.yml&title=team%3A+">《💜》Join</a>
-<a href="https://translate.zshell.dev">《🌐》Localize </a></p>
+  <a href="https://github.com/orgs/z-shell/discussions/">《❔ Ask a Question 》</a>
+  <a href="https://wiki.zshell.dev.dev/search">《💡 Search Wiki 》</a>
+  <a href="https://github.com/z-shell/community/issues/new?assignees=&labels=%F0%9F%91%A5+member&template=membership.yml&title=team%3A+">《💜 Join 》</a>
+  <a href="https://translate.zshell.dev">《🌐 Localize 》</a>
+</p>
 <p align="center">
 <a target="_self" href="https://translate.zshell.dev">
-<img align="center" src="https://badges.crowdin.net/e/f108c12713ee8526ac878d5671ad6e29/localized.svg" /></a>
-  <a href="https://github.com/z-shell/f-sy-h/actions/workflows/zunit.yml">
-<img
-  align="center"
-  src="https://github.com/z-shell/f-sy-h/actions/workflows/zunit.yml/badge.svg" />
+  <img align="center" src="https://badges.crowdin.net/e/f108c12713ee8526ac878d5671ad6e29/localized.svg" />
 </a>
-<a title="VIM" target="_self"
-href="https://github.com/z-shell/zi-vim-syntax/">
-<img align="center" src="https://img.shields.io/badge/--019733?logo=vim" alt="VIM" />
+<a href="https://github.com/z-shell/f-sy-h/actions/workflows/zunit.yml">
+  <img align="center" src="https://github.com/z-shell/f-sy-h/actions/workflows/zunit.yml/badge.svg" alt="✅ ZUnit" />
+</a>
+<a href="https://github.com/z-shell/F-Sy-H/actions/workflows/zsh-n.yml">
+  <img align="center" src="https://github.com/z-shell/F-Sy-H/actions/workflows/zsh-n.yml/badge.svg" alt="✅ Zsh Parse" />
+</a>
+<a href="https://github.com/z-shell/F-Sy-H/actions/workflows/trunk-check.yml">
+  <img align="center" src="https://github.com/z-shell/F-Sy-H/actions/workflows/trunk-check.yml/badge.svg" alt="⭕ Trunk" />
+</a>
+<a title="VIM" target="_self" href="https://github.com/z-shell/zi-vim-syntax/">
+  <img align="center" src="https://img.shields.io/badge/--019733?logo=vim" alt="VIM" />
 </a>
 <a title="ZW" target="_self" href="https://open.vscode.dev/z-shell/f-sy-h/">
-<img align="center" src="https://img.shields.io/badge/--007ACC?logo=visual%20studio%20code&logoColor=ffffff" alt="Visual Studio Code" /></a></p><hr />
+  <img align="center" src="https://img.shields.io/badge/--007ACC?logo=visual%20studio%20code&logoColor=ffffff" alt="Visual Studio Code" /></a></p><hr />
 <p align="center">
-<img align="center" style="width: 80%; height: auto" src="https://raw.githubusercontent.com/z-shell/.github/main/metrics/plugin/followup/f-sy-h_followup.svg" />
-  <img align="center" style="width: 80%; height: auto"
-src="https://raw.githubusercontent.com/z-shell/.github/main/metrics/plugin/metrics.svg" />
+<img align="center" width="80%" height="auto" src="https://raw.githubusercontent.com/z-shell/.github/main/metrics/plugin/followup/f-sy-h_followup.svg" />
+  <img align="center" width="80%" height="auto" src="https://raw.githubusercontent.com/z-shell/.github/main/metrics/plugin/metrics.svg" />
 <hr /><h2 align="left">Related</h2>
 <ul>
   <li><a href="../LICENSE">License</a></li>
@@ -41,11 +43,11 @@ src="https://raw.githubusercontent.com/z-shell/.github/main/metrics/plugin/metri
 
   <p>Clone the Repository.</p>
 
-<pre><code class="lang-zsh">git clone https://github.<span class="hljs-keyword">com</span>/<span class="hljs-keyword">z</span>-<span class="hljs-keyword">shell</span>/F-Sy-H ~/path/<span class="hljs-keyword">to</span>/fsh</code></pre>
+<pre><code class="lang-zsh">git clone https://github.<span class="hljs-keyword">com</span>/<span class="hljs-keyword">z</span>-<span class="hljs-keyword">shell</span>/F-Sy-H ~/path/<span class="hljs-keyword">to</span>/f-sy-h</code></pre>
 
   <p>And add the following to your `zshrc` file.</p>
 
-<pre><code class="lang-zsh"><span class="hljs-keyword">source</span> ~<span class="hljs-regexp">/path/</span>to<span class="hljs-regexp">/fsh/</span>F-Sy-H.plugin.zsh</code></pre>
+<pre><code class="lang-zsh"><span class="hljs-keyword">source</span> ~<span class="hljs-regexp">/path/</span>to<span class="hljs-regexp">/f-sy-h/</span>F-Sy-H.plugin.zsh</code></pre>
 
 <hr /><h3 align="left">Zi</h3>
 
@@ -340,7 +342,7 @@ alt="image could not be loaded"
 style="color: red; background-color: black; font-weight: bold" />
 </div>
 
-<p>The <a href="https://github.com/z-shell/F-Sy-H/tree/main/%E2%86%92chroma">chromas</a> that are enabled by default can be found <a href="https://github.com/z-shell/F-Sy-H/blob/main/fast-highlight#L166">here</a>.</p>
+<p>The <a href="https://github.com/z-shell/F-Sy-H/tree/main/%E2%86%92chroma">chromas</a> that are enabled by default can be found <a href="https://github.com/z-shell/F-Sy-H/blob/main/functions/fast-highlight#L172">here</a>.</p>
 
   <hr /><h3 align="left">Math-mode highlighting</h3>
 
@@ -392,16 +394,16 @@ style="color: red; background-color: black; font-weight: bold" />
   </p>
 <hr /><h2 align="left">Credits</h2>
 <p align="center">
-<a href="https://trunk.io" rel="nofollow"><img align="center" style="width: 140px; height: 40px"
-src="https://storage.googleapis.com/digital-space/img/brand/trunk/trunk-white.svg" alt="Trunk" />
+<a href="https://trunk.io" rel="nofollow">
+  <img align="center" width="140px" height="40px" src="https://storage.googleapis.com/digital-space/img/brand/trunk/trunk-white.svg" alt="Trunk" />
 </a>
 <a href="https://crowdin.com/?utm_source=badge&utm_medium=referral&utm_campaign=badge-add-on" rel="nofollow">
-<img align="center" style="width: 140px; height: 40px"
-src="https://storage.googleapis.com/digital-space/img/brand/crowdin/localization-at-dark-rounded%402x.png"
-alt="Crowdin | Agile localization for tech companies"/></a>
+  <img align="center" width="140px" height="40px" src="https://storage.googleapis.com/digital-space/img/brand/crowdin/localization-at-dark-rounded%402x.png" alt="Crowdin | Agile localization for tech companie" />
+</a>
 <a href="https://www.digitalocean.com/?refcode=090bdb63f800&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge" rel="nofollow">
-<img align="center" style="width: 140px; height: 40px"
-src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%203.svg" alt="DigitalOcean Referral Badge" /></a>
+  <img align="center" width="140px" height="40px" src="https://web-platforms.sfo2.digitaloceanspaces.com/WWW/Badge%203.svg" alt="DigitalOcean Referral Badge" />
+</a>
 <a href="https://cloudflare.com" rel="nofollow">
-<img align="center" style="width: 140px; height: 40px" src="https://storage.googleapis.com/digital-space/img/brand/cloudflare/cf-logo-v-rgb.png" alt="Cloudflare" /></a>
+  <img align="center" width="140px" height="40px" src="https://storage.googleapis.com/digital-space/img/brand/cloudflare/cf-logo-v-rgb.png" alt="Cloudflare" />
+</a>
 <p>

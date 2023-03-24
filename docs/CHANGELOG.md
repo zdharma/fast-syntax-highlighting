@@ -2,7 +2,7 @@
 
 ## 2018-08-09
 
-Added ideal string highlighting – FSH now handles any legal quoting and combination of `"`,`'` and `\` when
+Added ideal string highlighting – f-sy-h now handles any legal quoting and combination of `"`,`'` and `\` when
 highlighting program arguments. See the introduction for an example (item #14).
 
 ## 2018-08-02
@@ -28,8 +28,8 @@ set_fast_theme() {
 ```
 
 If you have set theme before an update of styles (e.g. recent addition of bracket highlighting)
-then please repeat `fast-theme {theme}` call to regenerate theme files. (**2018-08-09**: FSH
-now has full user-theme support, refer to [appropriate section of README](#customization)).
+then please repeat `fast-theme {theme}` call to regenerate theme files. (**2018-08-09**: f-sy-h
+now has full user-theme support, refer to [appropriate section of README](README.md#customization)).
 
 ## 2018-07-30
 
@@ -46,7 +46,7 @@ will be invoked everything will work as expected (Git chroma will be ran).
 
 ## 2018-07-11
 
-There were problems with Ctrl-C not working when using FSH. After many days I've found a fix
+There were problems with Ctrl-C not working when using f-sy-h. After many days I've found a fix
 for this, it's pushed to main.
 
 Second, asynchronous path checking (useful on e.g. slow network drives, or when there are many files in directory)
@@ -61,7 +61,7 @@ it shows functionality of `awk` – compiling of code and NOT running it. Perl c
 
 ## 2018-06-06
 
-FSH gained a new architecture – "chroma functions". They are similar to "completion functions", i.e. they
+f-sy-h gained a new architecture – "chroma functions". They are similar to "completion functions", i.e. they
 are defined **per-command**, but instead of completing that command, they colorize it. Two chroma exist,
 for `Git` ([video](https://asciinema.org/a/185707), [video](https://asciinema.org/a/185811)) and for `grep`
 ([video](https://asciinema.org/a/185942)). Checkout
@@ -91,7 +91,7 @@ For-loop is highlighted, it has separate settings in [theme file](https://github
 
 ## 2018-05-27
 
-Added support for 256-color themes. There are six themes shipped with FSH. The command to
+Added support for 256-color themes. There are six themes shipped with f-sy-h. The command to
 switch theme is `fast-theme {theme-name}`, it has a completion which lists available themes
 and options. Checkout [asciinema recording](https://asciinema.org/a/183814) that presents
 the themes.
@@ -137,7 +137,7 @@ Assignments are no more one-colour default-white. When used in assignment, highl
 
 Math mode is highlighted – expressions `(( ... ))` and `$(( ... ))`. Empty variables are colorized as red.
 There are 3 style names (fields of
-[FAST_HIGHLIGHT_STYLES](https://github.com/zdharma/fast-syntax-highlighting/blob/main/fast-highlight#L34)
+[FAST_HIGHLIGHT_STYLES](https://github.com/zdharma/fast-syntax-highlighting/blob/main/functions/fast-highlight#L34)
 hash) for math-variable, number and empty variable (error): `mathvar`, `mathnum`, `matherr`. You can set
 them (like the animation below shows) to change colors.
 

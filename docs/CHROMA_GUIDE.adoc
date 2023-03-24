@@ -134,7 +134,7 @@ integer __idx1 __idx2
         # Colorize 1..2 as builtin, 3.. as glob
         if (( FAST_HIGHLIGHT[chroma-example-counter] <= 2 )); then
             if [[ "$__wrd" = \"* ]]; then
-                # Pass through, fsh main code will do the highlight!
+                # Pass through, f-sy-h main code will do the highlight!
                 return 1
             else
                 __style=${FAST_THEME_NAME}builtin

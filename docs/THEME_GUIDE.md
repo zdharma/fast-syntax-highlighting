@@ -25,14 +25,15 @@ File name `overlay.ini` is treated specially.
 
 When specifing path, following short-hands can be used:
 
-```
-XDG:    = ~/.config/fsh (respects $XDG_CONFIG_HOME env var)
-LOCAL:  = /usr/local/share/fsh/
-HOME:   = ~/.fsh/
-OPT:    = /opt/local/share/fsh/
+```ini
+CONFIG:    = ~/.config/f-sy-h (respects $XDG_CONFIG_HOME env var)
+CACHE:    = ~/.cache/zi/f-sy-h (respects $XDG_CACHE_HOME env var)
+LOCAL:  = /usr/local/share/f-sy-h/
+HOME:   = ~/.f-sy-h/
+OPT:    = /opt/local/share/f-sy-h/
 ```
 
-So for example, issue `fast-theme XDG:overlay` to load `~/.config/fsh/overlay.ini` as overlay. The `.ini`
+So for example, issue `fast-theme CONFIG:overlay` to load `~/.config/f-sy-h/overlay.ini` as overlay. The `.ini`
 extension is optional.
 
 ## Secondary Theme
@@ -71,6 +72,6 @@ load, in Zsh format, not INI) kept under specified location. This is handy if e.
 Fast-Syntax-Highlighting system-wide (e.g. from AUR on ArchLinux) and want to have per-user
 theme setup.
 
-You can use "~" in the path, e.g. `FAST_WORK_DIR=~/.fsh` and also the `XDG:`, `LOCAL:`, `OPT:`,
-etc. short-hands, so e.g. `FAST_WORK_DIR=XDG` or `FAST_WORK_DIR=XDG:` is allowed (in this case
-it will be changed to `$HOME/.config/fsh` by default by F-Sy-H loader).
+You can use "~" in the path, e.g. `FAST_WORK_DIR=~/.f-sy-h` and also the `CONFIG:`, `CACHE:`, `LOCAL:`, `OPT:`,
+etc. short-hands, so e.g. `FAST_WORK_DIR=CONFIG` or `FAST_WORK_DIR=CONFIG:` is allowed (in this case
+it will be changed to `$HOME/.config/f-sy-h` by default by F-Sy-H loader).

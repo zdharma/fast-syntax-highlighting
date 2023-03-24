@@ -1,25 +1,32 @@
 version: 0.1
 cli:
-  version: 0.15.1-beta
-repo:
-  repo:
-    host: github.com
-    owner: z-shell
-    name: F-Sy-H
+  version: 1.3.2
+plugins:
+  sources:
+    - id: trunk
+      ref: v0.0.8
+      uri: https://github.com/trunk-io/plugins
 lint:
-  linters:
-    - name: markdownlint
-      command:
-        [markdownlint, -q, --config, .github/.markdownlint.yaml, "${target}"]
-      direct_configs: [.github/.markdownlint.yaml]
   enabled:
-    - git-diff-check@SYSTEM
-    - actionlint@1.6.15
-    - gitleaks@8.9.0
-    - markdownlint@0.32.1
-    - prettier@2.7.1
+    - gitleaks@8.15.3
+    - shellcheck@0.9.0
+    - git-diff-check
+    - actionlint@1.6.23
     - shfmt@3.5.0
+    - markdownlint@0.33.0
+    - oxipng@8.0.0
+    - prettier@2.8.3
   ignore:
     - linters: [ALL]
       paths:
         - "share/test/**"
+runtimes:
+  enabled:
+    - go@1.18.3
+    - node@18.12.1
+actions:
+  enabled:
+    - trunk-announce
+    - trunk-check-pre-push
+    - trunk-fmt-pre-commit
+    - trunk-upgrade-available

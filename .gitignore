@@ -8,6 +8,7 @@ test/res
 hold/*
 *.zwc
 ._zi
+out.parse
 
 ### Vim
 # Swap
